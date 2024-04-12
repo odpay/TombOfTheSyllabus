@@ -11,7 +11,7 @@ TILE_WIDTH = 9
 FPS = 60
 GRID_X = 64
 GRID_Y = 64
-CLI = True
+CLI = False
 LVL = 1
 
 def clear():
