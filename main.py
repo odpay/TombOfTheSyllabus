@@ -25,6 +25,8 @@ class Player():
         self.yVel = 0
         self.moving = False
         self.alive = True
+        self.won = False
+        self.starsCollected = 0
     def up(self):
         if not self.moving:
             self.yVel -= 1
@@ -50,8 +52,11 @@ class Player():
             legal = False
             if desX<GRID_X and desY<GRID_Y: 
                 des = grid[desY][desX]
-                if des == 0 and desX >= 0 and desY >= 0:
+                if des in [0,4] and desX >= 0 and desY >= 0:
                     legal = True
+                if des == 4:
+                    self.starsCollected += 1
+                    grid[desY][desX] = 0
                 if des == 3:
                     self.alive = False
             if legal:
@@ -92,7 +97,9 @@ def draw(grid, player, lastFrame=""):
             elif tile == 3:
                 view += "X"
                 pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
-                
+            elif tile == 4:
+                view += "+"
+                pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
             view += " "
         view += "|"
         view += "\n"
@@ -112,6 +119,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
+PURPLE = (93, 63, 211)
 
 
 

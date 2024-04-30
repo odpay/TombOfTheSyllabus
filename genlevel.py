@@ -9,6 +9,7 @@ BLUE = (0,0,255)
 YELLOW = (255,255,0)
 GREEN = (0,255,0)
 BLACK = (0,0,0)
+PURPLE = (93, 63, 211)
 levelData = {}
 level = []
 
@@ -26,6 +27,8 @@ for rownum in range(64):
         elif col == BLUE:
             levelData["playerSpawn"] = (pixelnum, rownum)
             row.append(0)
+        elif col == PURPLE:
+            row.append(4)
         else:
             row.append(0)
     level.append(row)
