@@ -1,6 +1,7 @@
 import pygame
 import os
 import json
+import time
 
 # WIDTH = 1000
 # HEIGHT = 600
@@ -12,7 +13,12 @@ FPS = 60
 GRID_X = 64
 GRID_Y = 64
 CLI = False
-LVL = 1
+LVL = "1"
+movementQueueMax = 1
+debugMode = False
+
+def dprint(x):
+    if debugMode: print(x)
 
 def clear():
     os.system("clear")
@@ -24,26 +30,59 @@ class Player():
         self.xVel = 0
         self.yVel = 0
         self.moving = False
+        self.movementQueue = []
         self.alive = True
         self.won = False
         self.starsCollected = 0
+
+    def addToMovementQueue(self, velDirection):
+        if len(self.movementQueue) < movementQueueMax:
+            if self.getLastMovement() != velDirection:
+                self.movementQueue.append(velDirection)
+
+    def getNextMovement(self, perish=False):
+        if len(self.movementQueue) == 0:
+            return None
+        nextMovement = self.movementQueue[0]
+        if perish:
+            self.movementQueue = self.movementQueue[1:]
+        return nextMovement
+    
+    def getLastMovement(self):
+        if len(self.movementQueue) == 0: return None
+        return self.movementQueue[len(self.movementQueue)-1]
+    
+    def consolidateMovementQueue(self):
+        nextMovement = self.getNextMovement(perish=True)
+        if nextMovement:
+            nextMovementX, nextMovementY = nextMovement
+            self.xVel += nextMovementX
+            self.yVel += nextMovementY
+            self.moving = True
     def up(self):
-        if not self.moving:
-            self.yVel -= 1
-            self.moving = True
+        self.addToMovementQueue((0, -1))
+        # if not self.moving:
+        #     self.yVel -= 1
+        #     self.moving = True
     def down(self):
-        if not self.moving:
-            self.yVel += 1 
-            self.moving = True
+        self.addToMovementQueue((0, 1))
+        # if not self.moving:
+        #     self.yVel += 1 
+        #     self.moving = True
     def left(self):
-        if not self.moving:
-            self.xVel -= 1
-            self.moving = True
+        self.addToMovementQueue((-1, 0))
+        # if not self.moving:
+        #     self.xVel -= 1
+        #     self.moving = True
     def right(self):
-        if not self.moving:
-            self.xVel += 1
-            self.moving = True
+        self.addToMovementQueue((1, 0))
+        # if not self.moving:
+        #     self.xVel += 1
+        #     self.moving = True
     def tick(self, grid):
+        dprint(self.movementQueue)
+        if not self.moving:
+            self.consolidateMovementQueue()
         if self.moving:
             desX = self.x + self.xVel
             desY = self.y + self.yVel
@@ -138,7 +177,7 @@ grid = []
 #     grid.append(row)
 
 match LVL:
-    case 0:
+    case "0":
         grid = [[0, 0, 0, 2, 3, 2, 0, 0, 0], 
                 [0, 0, 0, 2, 0, 2, 0, 0, 0], 
                 [0, 0, 0, 2, 0, 2, 0, 0, 0], 
@@ -148,8 +187,8 @@ match LVL:
                 [0, 2, 0, 0, 0, 2, 0, 2, 0], 
                 [0, 2, 0, 0, 0, 2, 0, 2, 0], 
                 [0, 2, 2, 2, 2, 2, 0, 2, 0]]
-    case 1:
-        with open("asd.json", "r") as f:
+    case _:
+        with open(f"levelFiles/{LVL}.json", "r") as f:
             levelData = json.loads(f.read())
             grid = levelData["levelMap"]
             pX, pY = tuple(levelData["playerSpawn"])
@@ -160,7 +199,12 @@ controls = {
     pygame.K_UP: p1.up,
     pygame.K_DOWN: p1.down,
     pygame.K_LEFT: p1.left,
-    pygame.K_RIGHT: p1.right
+    pygame.K_RIGHT: p1.right,
+
+    pygame.K_w: p1.up,
+    pygame.K_s: p1.down,
+    pygame.K_a: p1.left,
+    pygame.K_d: p1.right
 }
 
 run = True
@@ -173,10 +217,13 @@ while run:
             quit_flag = True
             pygame.quit()
             exit()
-    keys = pygame.key.get_pressed()
-    for control in controls.keys():
-        if keys[control]:
-            controls.get(control)()
+        if event.type == pygame.KEYDOWN:
+            if event.key in controls.keys():
+                controls.get(event.key)()
+    # keys = pygame.key.get_pressed()
+    # for control in controls.keys():
+    #     if keys[control]:
+    #         controls.get(control)()
     p1.tick(grid)
     SCREEN.fill(BLACK)
     
