@@ -9,10 +9,10 @@ WIDTH = 640
 HEIGHT = 640
 PADDING = 1
 TILE_WIDTH = 9
-FPS = 60
+FPS = 48
 GRID_X = 64
 GRID_Y = 64
-CLI = False
+CLI = True
 LVL = "1"
 movementQueueMax = 1
 debugMode = False
@@ -31,6 +31,7 @@ class Player():
         self.yVel = 0
         self.moving = False
         self.movementQueue = []
+        self.lastMovement = (0,0)
         self.alive = True
         self.won = False
         self.starsCollected = 0
@@ -38,6 +39,7 @@ class Player():
     def addToMovementQueue(self, velDirection):
         if len(self.movementQueue) < movementQueueMax:
             if self.getLastMovement() != velDirection:
+                self.lastMovement = velDirection
                 self.movementQueue.append(velDirection)
 
     def getNextMovement(self, perish=False):
@@ -49,7 +51,7 @@ class Player():
         return nextMovement
     
     def getLastMovement(self):
-        if len(self.movementQueue) == 0: return None
+        if len(self.movementQueue) == 0: return self.lastMovement
         return self.movementQueue[len(self.movementQueue)-1]
     
     def consolidateMovementQueue(self):
@@ -91,13 +93,16 @@ class Player():
             legal = False
             if desX<GRID_X and desY<GRID_Y: 
                 des = grid[desY][desX]
-                if des in [0,4] and desX >= 0 and desY >= 0:
+                if des in [0,4,5] and desX >= 0 and desY >= 0:
                     legal = True
                 if des == 4:
                     self.starsCollected += 1
                     grid[desY][desX] = 0
                 if des == 3:
                     self.alive = False
+                if des == 5:
+                    self.won = True
+
             if legal:
                 self.moving = True
                 self.x = desX
@@ -139,6 +144,9 @@ def draw(grid, player, lastFrame=""):
             elif tile == 4:
                 view += "+"
                 pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+            elif tile == 5:
+                view += "$"
+                pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
             view += " "
         view += "|"
         view += "\n"

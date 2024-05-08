@@ -1,7 +1,10 @@
 from PIL import Image
 import json
 
-im = Image.open('levelsprites/1.png', 'r')
+LVL = "1"
+
+im = Image.open(f'levelsprites/{LVL}.png', 'r')
+
 
 RED = (255,0,0)
 WHITE = (255,255,255)
@@ -29,10 +32,12 @@ for rownum in range(64):
             row.append(0)
         elif col == PURPLE:
             row.append(4)
+        elif col == GREEN:
+            row.append(5)
         else:
             row.append(0)
     level.append(row)
 
 levelData["levelMap"] = level
-with open("asd.json", "w") as f:
+with open(f"levelFiles/{LVL}.json", "w") as f:
     f.write(json.dumps(levelData))
