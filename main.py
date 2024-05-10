@@ -1,5 +1,6 @@
-import pygame
 import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+import pygame
 import json
 import time
 
@@ -12,10 +13,27 @@ TILE_WIDTH = 9
 FPS = 48
 GRID_X = 64
 GRID_Y = 64
-CLI = True
-LVL = "1"
+CLI = False
+# LVL = "1"
+LVL_dir = "levelFiles"
 movementQueueMax = 1
 debugMode = False
+
+
+def loadLevels(dir):
+    levels = {}
+    for file in os.scandir(dir):
+        if file.is_file:
+            name = file.name.split(".")[0]
+            levels[name] = {}
+            with open(f"{dir}/{file.name}", 'r') as f:
+                levelData = json.loads(f.read())
+                levels[name]["playerSpawn"] = tuple(levelData["playerSpawn"])
+                levels[name]["levelMap"] = levelData["levelMap"]
+    return levels
+
+
+LVLs = loadLevels(LVL_dir)
 
 def dprint(x):
     if debugMode: print(x)
@@ -173,69 +191,91 @@ PURPLE = (93, 63, 211)
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT), vsync=1)
 CLOCK = pygame.time.Clock()
 
+def init(LVL="1"):
+    global grid, p1, controls
+    grid = []
+
+    grid = LVLs[LVL]["levelMap"]
+    pX, pY = LVLs[LVL]["playerSpawn"]
+
+    # match LVL:
+    #     case "0":
+    #         grid = [[0, 0, 0, 2, 3, 2, 0, 0, 0], 
+    #                 [0, 0, 0, 2, 0, 2, 0, 0, 0], 
+    #                 [0, 0, 0, 2, 0, 2, 0, 0, 0], 
+    #                 [0, 2, 2, 2, 0, 2, 2, 2, 0], 
+    #                 [0, 2, 0, 0, 0, 0, 0, 2, 0], 
+    #                 [0, 2, 0, 0, 0, 2, 0, 2, 0], 
+    #                 [0, 2, 0, 0, 0, 2, 0, 2, 0], 
+    #                 [0, 2, 0, 0, 0, 2, 0, 2, 0], 
+    #                 [0, 2, 2, 2, 2, 2, 0, 2, 0]]
+    #     case _:
+    #         with open(f"levelFiles/{LVL}.json", "r") as f:
+    #             levelData = json.loads(f.read())
+    #             grid = levelData["levelMap"]
+    #             pX, pY = tuple(levelData["playerSpawn"])
+
+    p1 = Player(pX, pY)
+
+    controls = {
+        pygame.K_UP: p1.up,
+        pygame.K_DOWN: p1.down,
+        pygame.K_LEFT: p1.left,
+        pygame.K_RIGHT: p1.right,
+
+        pygame.K_w: p1.up,
+        pygame.K_s: p1.down,
+        pygame.K_a: p1.left,
+        pygame.K_d: p1.right
+    }
+
+def levelSelect():
+    selected = False
+    while not selected:
+        CLOCK.tick(FPS)
+        levelList = LVLs.keys()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+        SCREEN.fill(BLACK)
+
+        for level in levelList:
+            pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(int(level)*(30+50), (120), 60, 40))
+        pygame.display.flip()
+        if CLI:
+            levelSelection = input(f"select level ({', '.join(levelList)}): ")
+    return levelSelection
+
+def main():
+    run = True
+    lastFrame=""
+    while run and p1.alive and not p1.won:
+        CLOCK.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key in controls.keys():
+                    controls.get(event.key)()
+        # keys = pygame.key.get_pressed()
+        # for control in controls.keys():
+        #     if keys[control]:
+        #         controls.get(control)()
+        p1.tick(grid)
+        SCREEN.fill(BLACK)
+        
+        if CLI: lastFrame = draw(grid, p1, lastFrame)
+        else:
+            draw(grid, p1)
+        pygame.display.flip()
+    # if p1.won:
 
 
-grid = []
 
 
-# for y in range(GRID_Y):
-#     row = []
-#     for x in range(GRID_X):
-#         row.append(0)
-#     grid.append(row)
-
-match LVL:
-    case "0":
-        grid = [[0, 0, 0, 2, 3, 2, 0, 0, 0], 
-                [0, 0, 0, 2, 0, 2, 0, 0, 0], 
-                [0, 0, 0, 2, 0, 2, 0, 0, 0], 
-                [0, 2, 2, 2, 0, 2, 2, 2, 0], 
-                [0, 2, 0, 0, 0, 0, 0, 2, 0], 
-                [0, 2, 0, 0, 0, 2, 0, 2, 0], 
-                [0, 2, 0, 0, 0, 2, 0, 2, 0], 
-                [0, 2, 0, 0, 0, 2, 0, 2, 0], 
-                [0, 2, 2, 2, 2, 2, 0, 2, 0]]
-    case _:
-        with open(f"levelFiles/{LVL}.json", "r") as f:
-            levelData = json.loads(f.read())
-            grid = levelData["levelMap"]
-            pX, pY = tuple(levelData["playerSpawn"])
-
-p1 = Player(pX, pY)
-
-controls = {
-    pygame.K_UP: p1.up,
-    pygame.K_DOWN: p1.down,
-    pygame.K_LEFT: p1.left,
-    pygame.K_RIGHT: p1.right,
-
-    pygame.K_w: p1.up,
-    pygame.K_s: p1.down,
-    pygame.K_a: p1.left,
-    pygame.K_d: p1.right
-}
-
-run = True
-lastFrame=""
-while run:
-    CLOCK.tick(FPS)
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            quit_flag = True
-            pygame.quit()
-            exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key in controls.keys():
-                controls.get(event.key)()
-    # keys = pygame.key.get_pressed()
-    # for control in controls.keys():
-    #     if keys[control]:
-    #         controls.get(control)()
-    p1.tick(grid)
-    SCREEN.fill(BLACK)
-    
-    if CLI: lastFrame = draw(grid, p1, lastFrame)
-    else:
-        draw(grid, p1)
-    pygame.display.flip()
+if __name__ == "__main__":
+    init(levelSelect())
+    main()
