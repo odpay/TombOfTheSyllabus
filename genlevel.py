@@ -1,7 +1,7 @@
 from PIL import Image
 import json
 
-LVL = "3"
+LVL = "theoplegends"
 
 im = Image.open(f'levelsprites/{LVL}.png', 'r')
 
