@@ -5,7 +5,6 @@ LVL = "6"
 
 im = Image.open(f'levelsprites/{LVL}.png', 'r')
 
-
 RED = (255,0,0)
 WHITE = (255,255,255)
 BLUE = (0,0,255)
@@ -21,6 +20,7 @@ for rownum in range(64):
     for pixelnum in range(64):
         col = im.getpixel((pixelnum, rownum))
         col = col[0:3]
+        
         if col == WHITE:
             row.append(0)
         elif col == BLACK:
