@@ -21,20 +21,21 @@ for rownum in range(64):
     for pixelnum in range(64):
         col = im.getpixel((pixelnum, rownum))
         col = col[0:3]
-        if col == WHITE:
+        match col:
+        case WHITE:
             row.append(0)
-        elif col == BLACK:
+        case BLACK:
             row.append(2)
-        elif col == RED:
+        case RED:
             row.append(3)
-        elif col == BLUE:
+        case BLUE:
             levelData["playerSpawn"] = (pixelnum, rownum)
             row.append(0)
-        elif col == PURPLE:
+        case PURPLE:
             row.append(4)
-        elif col == GREEN:
+        case GREEN:
             row.append(5)
-        else:
+        case _:
             row.append(0)
     level.append(row)
 
