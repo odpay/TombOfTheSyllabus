@@ -277,5 +277,5 @@ def main():
 
 
 if __name__ == "__main__":
-    init("theoplegends")
+    init("1")
     main()
