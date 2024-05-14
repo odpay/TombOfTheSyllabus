@@ -22,21 +22,21 @@ for rownum in range(64):
         col = im.getpixel((pixelnum, rownum))
         col = col[0:3]
         match col:
-        case WHITE:
-            row.append(0)
-        case BLACK:
-            row.append(2)
-        case RED:
-            row.append(3)
-        case BLUE:
-            levelData["playerSpawn"] = (pixelnum, rownum)
-            row.append(0)
-        case PURPLE:
-            row.append(4)
-        case GREEN:
-            row.append(5)
-        case _:
-            row.append(0)
+            case WHITE:
+                row.append(0)
+            case BLACK:
+                row.append(2)
+            case RED:
+                row.append(3)
+            case BLUE:
+                levelData["playerSpawn"] = (pixelnum, rownum)
+                row.append(0)
+            case PURPLE:
+                row.append(4)
+            case GREEN:
+                row.append(5)
+            case _:
+                row.append(0)
     level.append(row)
 
 levelData["levelMap"] = level
