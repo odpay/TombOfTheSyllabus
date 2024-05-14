@@ -136,7 +136,13 @@ class Player():
         # if self.y not in range(rows): self.y -= self.yVel
         # self.yVel = 0
 
+# class Button():
+#     def __init__(self, x, y, width, height, text, bg_colour, text_colour):
+#         self.bg_colour = bg_colour
+#         self.rect = pygame.Rect(x, y, width, height)
 
+#     def draw(self):
+#         pygame.draw.rect(SCREEN, self.bg_colour)
 
 def draw(grid, player, lastFrame=""):
     view = ""
@@ -231,13 +237,17 @@ def init(LVL="1"):
 
 def levelSelect():
     selected = False
+
     while not selected:
         CLOCK.tick(FPS)
         levelList = LVLs.keys()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+            match event.type:
+                case pygame.MOUSEBUTTONDOWN:
+                    pass
+                case pygame.QUIT:
+                    pygame.quit()
+                    exit()
         SCREEN.fill(BLACK)
 
         for level in levelList:
