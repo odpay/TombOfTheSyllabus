@@ -10,11 +10,14 @@ TILE_WIDTH = 9
 FPS = 48
 GRID_X = 64
 GRID_Y = 64
-CLI = True
-LVL = "1"
+CLI = False
+titlePrefix = "TOTS: "
+
 LVL_dir = "levelFiles"
 movementQueueMax = 1
 debugMode = False
+
+pygame.init()
 
 def loadLevels(dir):
     levels = {}
@@ -35,6 +38,9 @@ def dprint(x):
 
 def clear():
     os.system("clear")
+
+def setTitle(text, prefix=True):
+    pygame.display.set_caption(f"{titlePrefix if prefix else ''}{text}")
 
 class Player():
     def __init__(self, x, y):
@@ -128,6 +134,14 @@ class Player():
         # self.y += self.yVel
         # if self.y not in range(rows): self.y -= self.yVel
         # self.yVel = 0
+
+# class Button():
+#     def __init__(self, x, y, width, height, text, bg_colour, text_colour):
+#         self.bg_colour = bg_colour
+#         self.rect = pygame.Rect(x, y, width, height)
+
+#     def draw(self):
+#         pygame.draw.rect(SCREEN, self.bg_colour)
 
 def draw(grid, player, lastFrame=""):
     view = ""
@@ -228,14 +242,18 @@ def init(LVL="1"):
     }
 
 def levelSelect():
-    selected = False
-    while not selected:
+    setTitle("Level Select", True)
+    while True:
+        LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
         CLOCK.tick(FPS)
         levelList = LVLs.keys()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+            match event.type:
+                case pygame.MOUSEBUTTONDOWN:
+                    pass
+                case pygame.QUIT:
+                    pygame.quit()
+                    exit()
         SCREEN.fill(BLACK)
 
         for level in levelList:
@@ -245,7 +263,7 @@ def levelSelect():
             levelSelection = input(f"select level ({', '.join(levelList)}): ")
     return levelSelection
 
-def main():
+def play():
     run = True
     lastFrame=""
     while run and p1.alive and not p1.won:
@@ -268,5 +286,6 @@ def main():
     # if p1.won:
 
 if __name__ == "__main__":
-    init(LVL)
-    main()
+    levelSelect()
+    init("3")
+    play()
