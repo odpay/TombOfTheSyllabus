@@ -14,11 +14,13 @@ FPS = 48
 GRID_X = 64
 GRID_Y = 64
 CLI = False
+titlePrefix = "TOTS: "
 # LVL = "1"
 LVL_dir = "levelFiles"
 movementQueueMax = 1
 debugMode = False
 
+pygame.init()
 
 def loadLevels(dir):
     levels = {}
@@ -40,6 +42,9 @@ def dprint(x):
 
 def clear():
     os.system("clear")
+
+def setTitle(text, prefix=True):
+    pygame.display.set_caption(f"{titlePrefix if prefix else ''}{text}")
 
 class Player():
     def __init__(self, x, y):
@@ -236,9 +241,9 @@ def init(LVL="1"):
     }
 
 def levelSelect():
-    selected = False
-
-    while not selected:
+    setTitle("Level Select", True)
+    while True:
+        LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
         CLOCK.tick(FPS)
         levelList = LVLs.keys()
         for event in pygame.event.get():
@@ -257,7 +262,7 @@ def levelSelect():
             levelSelection = input(f"select level ({', '.join(levelList)}): ")
     return levelSelection
 
-def main():
+def play():
     run = True
     lastFrame=""
     while run and p1.alive and not p1.won:
@@ -287,5 +292,6 @@ def main():
 
 
 if __name__ == "__main__":
-    init("1")
-    main()
+    levelSelect()
+    init("3")
+    play()
