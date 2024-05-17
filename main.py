@@ -7,10 +7,11 @@ from datetime import datetime, timedelta
 # WIDTH = 1000
 # HEIGHT = 600
 WIDTH = 640
-HEIGHT = 640
+HEIGHT = 680
+HEADER_PADDING = 40
 PADDING = 1
 TILE_WIDTH = 9
-FPS = 48
+FPS = 60
 GRID_X = 64
 GRID_Y = 64
 CLI = False
@@ -186,23 +187,23 @@ def draw(grid, player, lastFrame=""):
             if (tileN, rowN) == (player.x, player.y):
                 if player.alive:
                     view += "@"
-                    pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                    pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
                 else:
                     view += " "
             elif tile == 0:
                 view += " "
             elif tile == 2:
                 view += "#"
-                pygame.draw.rect(SCREEN, WHITE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, WHITE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
             elif tile == 3:
                 view += "X"
-                pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
             elif tile == 4:
                 view += "+"
-                pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
             elif tile == 5:
                 view += "$"
-                pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
             view += " "
         view += "|"
         view += "\n"
@@ -300,8 +301,8 @@ def levelSelect():
         for levelButton, _ in levelButtons:
             levelButton.update(SCREEN)
         pygame.display.flip()
-        if CLI:
-            levelSelection = input(f"select level ({', '.join(levelList)}): ")
+        # if CLI:
+        #     levelSelection = input(f"select level ({', '.join(levelList)}): ")
 
 def play():
     run = True
@@ -314,12 +315,11 @@ def play():
                 pygame.quit()
                 exit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    levelSelect()
+                    exit()
                 if event.key in controls.keys():
                     controls.get(event.key)()
-        # keys = pygame.key.get_pressed()
-        # for control in controls.keys():
-        #     if keys[control]:
-        #         controls.get(control)()
         p1.tick(grid)
         SCREEN.fill(BLACK)
         
@@ -336,6 +336,10 @@ def play():
 
 
 if __name__ == "__main__":
-    # levelSelect()
-    init("3")
-    play()
+    if debugMode:
+        init("1")
+        play()
+    else:
+        levelSelect()
+        # init("3")
+        # play()
