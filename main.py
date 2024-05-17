@@ -2,10 +2,7 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import json
-import time
 
-# WIDTH = 1000
-# HEIGHT = 600
 WIDTH = 640
 HEIGHT = 640
 PADDING = 1
@@ -15,7 +12,7 @@ GRID_X = 64
 GRID_Y = 64
 CLI = False
 titlePrefix = "TOTS: "
-# LVL = "1"
+
 LVL_dir = "levelFiles"
 movementQueueMax = 1
 debugMode = True
@@ -38,7 +35,6 @@ def loadLevels(dir):
                 levels[name]["playerSpawn"] = tuple(levelData["playerSpawn"])
                 levels[name]["levelMap"] = levelData["levelMap"]
     return levels
-
 
 LVLs = loadLevels(LVL_dir)
 
@@ -91,26 +87,22 @@ class Player():
             self.xVel += nextMovementX
             self.yVel += nextMovementY
             self.moving = True
+    
+    def move(self, direction):
+        self.addToMovementQueue(direction)
+
     def up(self):
-        self.addToMovementQueue((0, -1))
-        # if not self.moving:
-        #     self.yVel -= 1
-        #     self.moving = True
+        self.move(UP)
+
     def down(self):
-        self.addToMovementQueue((0, 1))
-        # if not self.moving:
-        #     self.yVel += 1 
-        #     self.moving = True
+        self.move(DOWN)
+
     def left(self):
-        self.addToMovementQueue((-1, 0))
-        # if not self.moving:
-        #     self.xVel -= 1
-        #     self.moving = True
+        self.move(LEFT)
+
     def right(self):
-        self.addToMovementQueue((1, 0))
-        # if not self.moving:
-        #     self.xVel += 1
-        #     self.moving = True
+        self.move(RIGHT)
+
     def tick(self, grid):
         dprint(self.movementQueue)
         if not self.moving:
@@ -125,13 +117,15 @@ class Player():
                 des = grid[desY][desX]
                 if des in [0,4,5] and desX >= 0 and desY >= 0:
                     legal = True
-                if des == 4:
-                    self.starsCollected += 1
-                    grid[desY][desX] = 0
-                if des == 3:
-                    self.alive = False
-                if des == 5:
-                    self.won = True
+                
+                match des:
+                    case 4:
+                        self.starsCollected += 1
+                        grid[desY][desX] = 0
+                    case 3:
+                        self.alive = False
+                    case 5:
+                        self.won = True
 
             if legal:
                 self.moving = True
@@ -180,29 +174,32 @@ def draw(grid, player, lastFrame=""):
                     pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
                 else:
                     view += " "
-            elif tile == 0:
-                view += " "
-            elif tile == 2:
-                view += "#"
-                pygame.draw.rect(SCREEN, WHITE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
-            elif tile == 3:
-                view += "X"
-                pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
-            elif tile == 4:
-                view += "+"
-                pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
-            elif tile == 5:
-                view += "$"
-                pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+            else: 
+                match tile:
+                    case 0:
+                        view += " "
+                    case 2:
+                        view += "#"
+                        pygame.draw.rect(SCREEN, WHITE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                    case 3:
+                        view += "X"
+                        pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                    case 4:
+                        view += "+"
+                        pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                    case 5:
+                        view += "$"
+                        pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING), TILE_WIDTH, TILE_WIDTH))
+                    case _:
+                        print(f'Tile {tile} not recognized')
             view += " "
         view += "|"
         view += "\n"
     view += "- - - - - - - - - - -\n"
-    if lastFrame != view and CLI:
+    if not lastFrame == view and CLI:
         clear()
         print(view)
     return view
-
 
 ## Constants
 
@@ -215,7 +212,11 @@ GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 PURPLE = (93, 63, 211)
 
-
+# Directions
+UP = (0, -1)
+DOWN = (0, 1)
+LEFT = (-1, 0)
+RIGHT = (1, 0)
 
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT), vsync=1)
 CLOCK = pygame.time.Clock()
@@ -300,13 +301,9 @@ def play():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key in controls.keys():
-                    controls.get(event.key)()
-        # keys = pygame.key.get_pressed()
-        # for control in controls.keys():
-        #     if keys[control]:
-        #         controls.get(control)()
+            if event.type == pygame.KEYDOWN and event.key in controls.keys():
+                controls.get(event.key)()
+
         p1.tick(grid)
         SCREEN.fill(BLACK)
         
@@ -315,9 +312,6 @@ def play():
             draw(grid, p1)
         pygame.display.flip()
     # if p1.won:
-
-
-
 
 if __name__ == "__main__":
     levelSelect()
