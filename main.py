@@ -18,9 +18,14 @@ titlePrefix = "TOTS: "
 # LVL = "1"
 LVL_dir = "levelFiles"
 movementQueueMax = 1
-debugMode = False
+debugMode = True
 
 pygame.init()
+
+def getFont(size):
+    return pygame.font.SysFont(None, size)
+
+
 
 def loadLevels(dir):
     levels = {}
@@ -46,10 +51,12 @@ def clear():
 def setTitle(text, prefix=True):
     pygame.display.set_caption(f"{titlePrefix if prefix else ''}{text}")
 
+# class Button()
+#     def __init__(self, pos, font, base_colour)
+
 class Player():
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, pos):
+        self.x, self.y = pos
         self.xVel = 0
         self.yVel = 0
         self.moving = False
@@ -141,13 +148,24 @@ class Player():
         # if self.y not in range(rows): self.y -= self.yVel
         # self.yVel = 0
 
-# class Button():
-#     def __init__(self, x, y, width, height, text, bg_colour, text_colour):
-#         self.bg_colour = bg_colour
-#         self.rect = pygame.Rect(x, y, width, height)
-
-#     def draw(self):
-#         pygame.draw.rect(SCREEN, self.bg_colour)
+class Button():
+    def __init__(self, pos, size, text_str, font, text_colour, bg_colour):
+        self.x, self.y = pos
+        self.width, self.height = size
+        self.text_str = text_str
+        self.font = font
+        self.text_colour = text_colour
+        self.text = self.font.render(self.text_str, True, self.text_colour)
+        # if self.image is None: self.image = self.text
+        self.bg_colour = bg_colour
+        self.rect = self.text.get_rect(center=(self.x, self.y))
+        # self.text_rect = self.text.get_rect(center=(self.x, self.y))
+    def update(self, screen):
+        pygame.draw.rect(screen, self.bg_colour, self.rect)
+        screen.blit(self.text, self.rect)
+    
+    def checkForInput(self, pos):
+        return self.rect.collidepoint(pos)
 
 def draw(grid, player, lastFrame=""):
     view = ""
@@ -226,7 +244,7 @@ def init(LVL="1"):
     #             grid = levelData["levelMap"]
     #             pX, pY = tuple(levelData["playerSpawn"])
 
-    p1 = Player(pX, pY)
+    p1 = Player((pX, pY))
 
     controls = {
         pygame.K_UP: p1.up,
@@ -242,21 +260,31 @@ def init(LVL="1"):
 
 def levelSelect():
     setTitle("Level Select", True)
+    levelList = LVLs.keys()
+    levelButtons = []
+    for level in levelList:
+        # pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(int(level)*(30+50), (120), 60, 40))
+        levelButtons.append((Button((int(level)*70, 40), (50, 30), level, getFont(28), BLACK, YELLOW), level))
     while True:
-        LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
         CLOCK.tick(FPS)
-        levelList = LVLs.keys()
+        # LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
+
         for event in pygame.event.get():
             match event.type:
                 case pygame.MOUSEBUTTONDOWN:
-                    pass
+                    for levelButton, level in levelButtons:
+                        if levelButton.checkForInput(pygame.mouse.get_pos()): 
+                            init(level)
+                            play()
+                            return
+                        # exit()
                 case pygame.QUIT:
                     pygame.quit()
                     exit()
         SCREEN.fill(BLACK)
 
-        for level in levelList:
-            pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(int(level)*(30+50), (120), 60, 40))
+        for levelButton, _ in levelButtons:
+            levelButton.update(SCREEN)
         pygame.display.flip()
         if CLI:
             levelSelection = input(f"select level ({', '.join(levelList)}): ")
@@ -293,5 +321,5 @@ def play():
 
 if __name__ == "__main__":
     levelSelect()
-    init("3")
-    play()
+    # init("3")
+    # play()
