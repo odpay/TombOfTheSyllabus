@@ -2,7 +2,7 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import json
-import time
+from datetime import datetime, timedelta
 
 # WIDTH = 1000
 # HEIGHT = 600
@@ -18,9 +18,10 @@ titlePrefix = "TOTS: "
 # LVL = "1"
 LVL_dir = "levelFiles"
 movementQueueMax = 1
-debugMode = True
+debugMode = False
 
 pygame.init()
+pygame.font.init()
 
 def getFont(size):
     return pygame.font.SysFont(None, size)
@@ -65,6 +66,7 @@ class Player():
         self.alive = True
         self.won = False
         self.starsCollected = 0
+        self.aliveDuration = 0
 
     def addToMovementQueue(self, velDirection):
         if len(self.movementQueue) < movementQueueMax:
@@ -91,6 +93,11 @@ class Player():
             self.xVel += nextMovementX
             self.yVel += nextMovementY
             self.moving = True
+        
+    def getAliveDuration(self):
+        return timedelta(seconds=(self.aliveDuration / FPS)).seconds
+    
+
     def up(self):
         self.addToMovementQueue((0, -1))
         # if not self.moving:
@@ -112,7 +119,9 @@ class Player():
         #     self.xVel += 1
         #     self.moving = True
     def tick(self, grid):
-        dprint(self.movementQueue)
+        if self.alive and not self.won: self.aliveDuration += 1
+        # dprint(self.movementQueue)
+        dprint(self.getAliveDuration())
         if not self.moving:
             self.consolidateMovementQueue()
         if self.moving:
@@ -203,6 +212,11 @@ def draw(grid, player, lastFrame=""):
         print(view)
     return view
 
+def drawHUD(screen, player):
+    currentTimeFont = getFont(16)
+    currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, BLUE)
+    screen.blit(currentTimeSurface, (0, 0))
+    # dprint(player.timer)
 
 ## Constants
 
@@ -288,7 +302,6 @@ def levelSelect():
         pygame.display.flip()
         if CLI:
             levelSelection = input(f"select level ({', '.join(levelList)}): ")
-    return levelSelection
 
 def play():
     run = True
@@ -313,13 +326,16 @@ def play():
         if CLI: lastFrame = draw(grid, p1, lastFrame)
         else:
             draw(grid, p1)
+        drawHUD(SCREEN, p1)
         pygame.display.flip()
-    # if p1.won:
+    if p1.won:
+        pass
+        
 
 
 
 
 if __name__ == "__main__":
-    levelSelect()
-    # init("3")
-    # play()
+    # levelSelect()
+    init("3")
+    play()
