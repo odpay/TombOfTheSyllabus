@@ -1,7 +1,7 @@
 from PIL import Image
 import json
 
-LVL = "1"
+LVL = "4"
 
 im = Image.open(f'levelsprites/{LVL}.png', 'r')
 
@@ -13,6 +13,8 @@ YELLOW = (255,255,0)
 GREEN = (0,255,0)
 BLACK = (0,0,0)
 PURPLE = (93, 63, 211)
+GREY = (128, 128, 128)
+LIGHT_BLUE = (155, 255, 255)
 levelData = {}
 level = []
 
@@ -34,6 +36,10 @@ for rownum in range(64):
             row.append(4)
         elif col == GREEN:
             row.append(5)
+        elif col == GREY:
+            row.append(6)
+        elif col == LIGHT_BLUE:
+            row.append(7)
         else:
             row.append(0)
     level.append(row)

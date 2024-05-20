@@ -68,6 +68,7 @@ class Player():
         self.won = False
         self.starsCollected = 0
         self.aliveDuration = 0
+        self.perishNextMove = []
 
     def addToMovementQueue(self, velDirection):
         if len(self.movementQueue) < movementQueueMax:
@@ -126,6 +127,8 @@ class Player():
         if not self.moving:
             self.consolidateMovementQueue()
         if self.moving:
+            for perishX, perishY in self.perishNextMove:
+                grid[perishY][perishX] = 0
             desX = self.x + self.xVel
             desY = self.y + self.yVel
             # self.xVel = 0
@@ -133,7 +136,7 @@ class Player():
             legal = False
             if desX<GRID_X and desY<GRID_Y: 
                 des = grid[desY][desX]
-                if des in [0,4,5] and desX >= 0 and desY >= 0:
+                if des in [0,4,5,6] and desX >= 0 and desY >= 0:
                     legal = True
                 if des == 4:
                     self.starsCollected += 1
@@ -142,6 +145,10 @@ class Player():
                     self.alive = False
                 if des == 5:
                     self.won = True
+                if des == 6:
+                    grid[desY][desX] = 2
+                if des == 7:
+                    self.perishNextMove.append((desX, desY))
 
             if legal:
                 self.moving = True
@@ -204,6 +211,12 @@ def draw(grid, player, lastFrame=""):
             elif tile == 5:
                 view += "$"
                 pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+            elif tile == 6:
+                view += "O"
+                pygame.draw.rect(SCREEN, GREY, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+            elif tile == 7:
+                view += "~"
+                pygame.draw.rect(SCREEN, LIGHT_BLUE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
             view += " "
         view += "|"
         view += "\n"
@@ -229,6 +242,8 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 PURPLE = (93, 63, 211)
+GREY = (128, 128, 128)
+LIGHT_BLUE = (155, 255, 255)
 
 
 
@@ -237,6 +252,7 @@ CLOCK = pygame.time.Clock()
 
 def init(LVL="1"):
     global grid, p1, controls
+    setTitle(f"Level: {LVL}")
     grid = []
 
     grid = LVLs[LVL]["levelMap"]
