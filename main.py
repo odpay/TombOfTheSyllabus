@@ -3,6 +3,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import json
 from datetime import datetime, timedelta
+import copy
 
 # WIDTH = 1000
 # HEIGHT = 600
@@ -120,7 +121,7 @@ class Player():
         # if not self.moving:
         #     self.xVel += 1
         #     self.moving = True
-    def tick(self, grid):
+    def tick(self):
         if self.alive and not self.won: self.aliveDuration += 1
         # dprint(self.movementQueue)
         dprint(self.getAliveDuration())
@@ -253,9 +254,10 @@ CLOCK = pygame.time.Clock()
 def init(LVL="1"):
     global grid, p1, controls
     setTitle(f"Level: {LVL}")
-    grid = []
-
-    grid = LVLs[LVL]["levelMap"]
+    # grid = []
+    
+    
+    grid = copy.deepcopy(LVLs[LVL]["levelMap"]) # deepcopy needed to prevent per-play tile updates from persisting across entire runtime
     pX, pY = LVLs[LVL]["playerSpawn"]
 
     # match LVL:
@@ -305,8 +307,8 @@ def levelSelect():
                 case pygame.MOUSEBUTTONDOWN:
                     for levelButton, level in levelButtons:
                         if levelButton.checkForInput(pygame.mouse.get_pos()): 
-                            init(level)
-                            play()
+                            # init(level)
+                            play(level)
                             return
                         # exit()
                 case pygame.QUIT:
@@ -320,7 +322,8 @@ def levelSelect():
         # if CLI:
         #     levelSelection = input(f"select level ({', '.join(levelList)}): ")
 
-def play():
+def play(LVL="1"):
+    init(LVL)
     run = True
     lastFrame=""
     while run and p1.alive and not p1.won:
@@ -336,7 +339,7 @@ def play():
                     exit()
                 if event.key in controls.keys():
                     controls.get(event.key)()
-        p1.tick(grid)
+        p1.tick()
         SCREEN.fill(BLACK)
         
         if CLI: lastFrame = draw(grid, p1, lastFrame)
@@ -353,9 +356,6 @@ def play():
 
 if __name__ == "__main__":
     if debugMode:
-        init("1")
         play()
     else:
         levelSelect()
-        # init("3")
-        # play()
