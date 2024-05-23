@@ -20,13 +20,15 @@ titlePrefix = "TOTS: "
 # LVL = "1"
 LVL_dir = "levelFiles"
 movementQueueMax = 1
-debugMode = False
+debugMode = True
 
 pygame.init()
 pygame.font.init()
 
-def getFont(size):
-    return pygame.font.SysFont(None, size)
+def getFont(size=12, font="tomb-of-the-mask"):
+    # return pygame.font.SysFont(None, size)
+    if font == "": return pygame.font.SysFont(None, size)
+    return pygame.font.Font(f"./assets/font/{font}/{font}.TTF", size)
 
 
 
@@ -124,7 +126,7 @@ class Player():
     def tick(self):
         if self.alive and not self.won: self.aliveDuration += 1
         # dprint(self.movementQueue)
-        dprint(self.getAliveDuration())
+        # dprint(self.getAliveDuration())
         if not self.moving:
             self.consolidateMovementQueue()
         if self.moving:
@@ -228,10 +230,10 @@ def draw(grid, player, lastFrame=""):
     return view
 
 def drawHUD(screen, player):
-    currentTimeFont = getFont(16)
-    
+    currentTimeFont = getFont(12)
+    collectedFont = getFont(16)
     currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, GREEN)
-    screen.blit(currentTimeSurface, (0, 0))
+    screen.blit(currentTimeSurface, (0, 24))
     # dprint(player.timer)
 
 ## Constants
@@ -298,7 +300,7 @@ def levelSelect():
     levelButtons = []
     for level in levelList:
         # pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(int(level)*(30+50), (120), 60, 40))
-        levelButtons.append((Button((int(level)*70, 40), (50, 30), level, getFont(28), BLACK, YELLOW), level))
+        levelButtons.append((Button((int(level)*70, 40), (50, 30), level, getFont(28, ""), BLACK, YELLOW), level))
     while True:
         CLOCK.tick(FPS)
         # LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
