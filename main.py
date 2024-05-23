@@ -17,7 +17,6 @@ GRID_X = 64
 GRID_Y = 64
 CLI = False
 titlePrefix = "TOTS: "
-# LVL = "1"
 LVL_dir = "levelFiles"
 movementQueueMax = 1
 debugMode = False
