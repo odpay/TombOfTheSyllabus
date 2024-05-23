@@ -229,7 +229,8 @@ def draw(grid, player, lastFrame=""):
 
 def drawHUD(screen, player):
     currentTimeFont = getFont(16)
-    currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, BLUE)
+    
+    currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, GREEN)
     screen.blit(currentTimeSurface, (0, 0))
     # dprint(player.timer)
 
@@ -348,7 +349,11 @@ def play(LVL="1"):
         drawHUD(SCREEN, p1)
         pygame.display.flip()
     if p1.won:
-        pass
+        levelSelect()
+        exit()
+    if not p1.alive:
+        levelSelect()
+        exit()
         
 
 
