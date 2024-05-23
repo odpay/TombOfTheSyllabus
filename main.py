@@ -230,9 +230,14 @@ def draw(grid, player, lastFrame=""):
     return view
 
 def drawHUD(screen, player):
+    collectedFont = getFont(12)
+    collectedSurface = collectedFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE)
+
     currentTimeFont = getFont(12)
-    collectedFont = getFont(16)
     currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, GREEN)
+
+
+    screen.blit(collectedSurface, (0, 4))
     screen.blit(currentTimeSurface, (0, 24))
     # dprint(player.timer)
 
