@@ -20,7 +20,7 @@ titlePrefix = "TOTS: "
 # LVL = "1"
 LVL_dir = "levelFiles"
 movementQueueMax = 1
-debugMode = True
+debugMode = False
 
 pygame.init()
 pygame.font.init()
@@ -299,6 +299,11 @@ def init(LVL="1"):
         pygame.K_d: p1.right
     }
 
+def checkQuit():
+    if pygame.event.get(eventtype=pygame.QUIT):
+        pygame.quit()
+        exit()
+
 def levelSelect():
     setTitle("Level Select", True)
     levelList = LVLs.keys()
@@ -310,6 +315,7 @@ def levelSelect():
         CLOCK.tick(FPS)
         # LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
 
+        checkQuit()
         for event in pygame.event.get():
             match event.type:
                 case pygame.MOUSEBUTTONDOWN:
@@ -319,9 +325,6 @@ def levelSelect():
                             play(level)
                             return
                         # exit()
-                case pygame.QUIT:
-                    pygame.quit()
-                    exit()
         SCREEN.fill(BLACK)
 
         for levelButton, _ in levelButtons:
@@ -337,10 +340,8 @@ def play(LVL="1"):
     while run and p1.alive and not p1.won:
         CLOCK.tick(FPS)
 
+        checkQuit()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     levelSelect()
@@ -359,15 +360,28 @@ def play(LVL="1"):
         levelSelect()
         exit()
     if not p1.alive:
+        # deathOverlay(SCREEN, p1)
         levelSelect()
         exit()
         
 
+def deathOverlay(screen, player):
+    setTitle("GAME OVER")
+    # pygame.draw.circle(SCREEN, RED, (300, 300), 30.0)
+    retryText = getFont(20)
+    retryTextSurface = retryText.render("<SPACE> to retry.", False, YELLOW)
+    screen.blit(retryTextSurface, (200, 500))
+    # retryTextSurface.blit()
+    
+    pygame.display.flip()
+    while True:
+        CLOCK.tick(FPS)
+        checkQuit()
 
 
 
 if __name__ == "__main__":
     if debugMode:
-        play()
+        play("3")
     else:
         levelSelect()
