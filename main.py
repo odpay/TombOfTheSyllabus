@@ -355,9 +355,13 @@ def play(LVL="1"):
         checkQuit()
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    levelSelect()
-                    exit()
+                match event.key:
+                    case pygame.K_ESCAPE:
+                        levelSelect()
+                        exit()
+                    case pygame.K_SPACE:
+                        play(LVL=LVL)
+                        exit()
                 if event.key in controls.keys():
                     controls.get(event.key)()
         p1.tick()
