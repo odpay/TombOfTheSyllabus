@@ -4,6 +4,7 @@ import pygame
 import json
 from datetime import datetime, timedelta
 import copy
+import os.path
 
 # WIDTH = 1000
 # HEIGHT = 600
@@ -18,6 +19,7 @@ GRID_Y = 64
 CLI = False
 titlePrefix = "TOTS: "
 LVL_dir = "levelFiles"
+RUN_DIR = "run"
 movementQueueMax = 1
 debugMode = False
 
@@ -65,6 +67,30 @@ def loadLevels(dir):
 
 
 LVLs = loadLevels(LVL_dir)
+
+def syncSave(saveFileName="save.json", write=True):
+    global save
+    fullDir = f"./{RUN_DIR}/{saveFileName}"
+
+    if not os.path.isfile(fullDir):
+        if not os.path.isdir(f"./{RUN_DIR}"):
+            os.mkdir(RUN_DIR)
+
+        with open(fullDir, "x") as newF:
+            newF.write("{}")
+            newF.close()
+
+    with open(fullDir, "r+") as saveFile:
+        if write:
+            saveFile.seek(0)
+            saveFile.write(json.dumps(save))
+        else:
+            saveFileData = json.loads(saveFile.read())
+            save = saveFileData
+        saveFile.close()
+
+
+syncSave(write=False)
 
 def dprint(x):
     if debugMode: print(x)
@@ -373,6 +399,7 @@ def play(LVL="1"):
         drawHUD(SCREEN, p1)
         pygame.display.flip()
     if p1.won:
+        win()
         levelSelect()
         exit()
     if not p1.alive:
@@ -407,6 +434,12 @@ def deathOverlay(screen, player):
                     return 1
                 case pygame.K_ESCAPE:
                     return 0
+                
+
+def win():
+    setTitle("Level complete!")
+
+
 
 
 
