@@ -186,15 +186,15 @@ class Player():
                 des = grid[desY][desX]
                 if des in [0,4,5,6] and desX >= 0 and desY >= 0:
                     legal = True
-                if des == 4:
-                    self.starsCollected += 1
-                    grid[desY][desX] = 0
+                    if des == 4:
+                        self.starsCollected += 1
+                        grid[desY][desX] = 0
+                    if des == 5:
+                        self.won = True
+                    if des == 6:
+                        grid[desY][desX] = 2
                 if des == 3:
                     self.alive = False
-                if des == 5:
-                    self.won = True
-                if des == 6:
-                    grid[desY][desX] = 2
                 if des == 7:
                     self.perishNextMove.append((desX, desY))
 
