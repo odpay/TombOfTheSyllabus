@@ -466,9 +466,22 @@ def win(LVL):
     syncSave(write=False)
     setTitle("Level complete!")
     completionRecord = CompletionRecord(p1.aliveDuration, p1.starsCollected)
-    SAVE[LVL] = completionRecord.toDict()
-    syncSave()
+    isHiScore = False
+    if LVL not in SAVE:
+        isHiScore = True
+    else:
+        savedRecord = CompletionRecord(recordDict=SAVE[LVL])
+        # example Ordering of scores (best -> worst): (12s, any stars) > (15s, 3 stars) > (15s 0 stars) > (17s, any stars)
+        # may implement system of valuing scores using both speed and star collection, 
+        # also since scores are stored in ticks, the second comparison will practically never be checked
+        if (completionRecord.timer < savedRecord.timer) or (completionRecord.timer == savedRecord.timer and completionRecord.collected > savedRecord.collected):
+            isHiScore = True
     
+    if isHiScore:
+        SAVE[LVL] = completionRecord.toDict()
+        syncSave()
+    syncSave(write=False)
+
 
 
 
