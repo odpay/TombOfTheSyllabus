@@ -393,8 +393,6 @@ def levelSelect():
         for levelButton, _ in levelButtons:
             levelButton.update(SCREEN)
         pygame.display.flip()
-        # if CLI:
-        #     levelSelection = input(f"select level ({', '.join(levelList)}): ")
 
 def play(LVL="1"):
     init(LVL)
@@ -448,7 +446,7 @@ def deathOverlay(screen, player):
     retryTextSurface = retryText.render("<SPACE> to retry.", False, YELLOW)
     SCREEN.blit(retryTextSurface, (WIDTH/2 - (retryTextSurface.get_width()/2), 10))
 
-    quitText = getFont(20)
+    # quitText = getFont(20)
     
     pygame.display.flip()
     while True:
