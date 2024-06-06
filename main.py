@@ -9,8 +9,8 @@ import os.path
 # WIDTH = 1000
 # HEIGHT = 600
 WIDTH = 640
-HEIGHT = 680
-HEADER_PADDING = 40
+HEIGHT = 700
+HEADER_PADDING = 60
 PADDING = 1
 TILE_WIDTH = 9
 FPS = 60
@@ -149,8 +149,11 @@ class Player():
             self.yVel += nextMovementY
             self.moving = True
         
-    def getAliveDuration(self):
-        return timedelta(seconds=(self.aliveDuration / FPS)).seconds
+    def getAliveDuration(self, formatted=True):
+        td = timedelta(seconds=(self.aliveDuration / FPS))
+        if formatted:
+            return formatTimeDelta(td)
+        return td
     
 
     def up(self):
@@ -279,13 +282,30 @@ def draw(grid, player, lastFrame=""):
         print(view)
     return view
 
-def drawHUD(screen, player):
+
+def formatTimeDelta(timeD):
+    return str(timeD.seconds).zfill(2) + ":" + str(int((timeD.total_seconds()-timeD.seconds)*1000)).zfill(2)[:2]
+    # e.g. "04:92"
+
+
+def drawHUD(screen, player, LVL):
     collectedFont = getFont(12)
     collectedSurface = collectedFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE)
 
     currentTimeFont = getFont(12)
     currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, GREEN)
 
+    if LVL in SAVE:
+        HSFont = getFont(12)
+        HSTime = timedelta(seconds=(SAVE[LVL]["timer"]/ FPS))
+        HSTimeString = formatTimeDelta(HSTime)
+        HSCollectedString = f"*  [{SAVE[LVL]['collected']}/3]"
+
+        HSTimeSurface = HSFont.render(f"Record Time: {HSTimeString}", False, YELLOW)
+        HSCollectedSurface = HSFont.render(HSCollectedString, False, PURPLE)
+
+        screen.blit(HSTimeSurface, (0, 44))
+        screen.blit(HSCollectedSurface, ((HSTimeSurface.get_width()), 44))
 
     screen.blit(collectedSurface, (0, 4))
     screen.blit(currentTimeSurface, (0, 24))
@@ -401,7 +421,7 @@ def play(LVL="1"):
         if CLI: lastFrame = draw(grid, p1, lastFrame)
         else:
             draw(grid, p1)
-        drawHUD(SCREEN, p1)
+        drawHUD(SCREEN, p1, LVL)
         pygame.display.flip()
     if p1.won:
         win(LVL)
