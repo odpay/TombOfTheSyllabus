@@ -68,8 +68,8 @@ def loadLevels(dir):
 
 LVLs = loadLevels(LVL_dir)
 
-def syncSave(saveFileName="save.json", write=True):
-    global save
+def syncSave(saveFileName="save.json", write=True, reset=False):
+    global SAVE
     fullDir = f"./{RUN_DIR}/{saveFileName}"
 
     if not os.path.isfile(fullDir):
@@ -81,12 +81,17 @@ def syncSave(saveFileName="save.json", write=True):
             newF.close()
 
     with open(fullDir, "r+") as saveFile:
-        if write:
+        if reset:
             saveFile.seek(0)
-            saveFile.write(json.dumps(save))
+            saveFile.truncate()
+            saveFile.write(json.dumps({}))
+        elif write:
+            saveFile.seek(0)
+            saveFile.truncate()
+            saveFile.write(json.dumps(SAVE, indent=4, sort_keys=True))
         else:
             saveFileData = json.loads(saveFile.read())
-            save = saveFileData
+            SAVE = saveFileData
         saveFile.close()
 
 
@@ -399,7 +404,7 @@ def play(LVL="1"):
         drawHUD(SCREEN, p1)
         pygame.display.flip()
     if p1.won:
-        win()
+        win(LVL)
         levelSelect()
         exit()
     if not p1.alive:
@@ -418,6 +423,7 @@ def play(LVL="1"):
 def deathOverlay(screen, player):
     setTitle("GAME OVER")
 
+    syncSave()
     retryText = getFont(16)
     retryTextSurface = retryText.render("<SPACE> to retry.", False, YELLOW)
     SCREEN.blit(retryTextSurface, (WIDTH/2 - (retryTextSurface.get_width()/2), 10))
@@ -436,8 +442,33 @@ def deathOverlay(screen, player):
                     return 0
                 
 
-def win():
+class CompletionRecord():
+    def __init__(self, timer=0, collected=0, completedAt=None, recordDict=None):
+        if recordDict:
+            self.timer = recordDict["timer"]
+            self.collected = recordDict["collected"]
+            self.completedAt = recordDict["completedAt"]
+        else:
+            self.timer = timer
+            self.collected = collected
+            if not completedAt: 
+                self.completedAt = int(datetime.now().timestamp())
+            else: 
+                self.completedAt = completedAt
+    def toDict(self):
+        return copy.deepcopy({
+            "timer" : self.timer,
+            "collected" : self.collected,
+            "completedAt" : self.completedAt
+        })
+
+def win(LVL):
+    syncSave(write=False)
     setTitle("Level complete!")
+    completionRecord = CompletionRecord(p1.aliveDuration, p1.starsCollected)
+    SAVE[LVL] = completionRecord.toDict()
+    syncSave()
+    
 
 
 

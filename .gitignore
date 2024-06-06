@@ -40,7 +40,7 @@ Temporary Items
 
 *.vsix
 
-
+.idea
 .history
 .ionide
 
