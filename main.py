@@ -17,6 +17,7 @@ FPS = 60
 GRID_X = 64
 GRID_Y = 64
 CLI = False
+UNLOCK_PROGRESSION = True
 titlePrefix = "TOTS: "
 LVL_dir = "levelFiles"
 RUN_DIR = "run"
@@ -34,6 +35,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
+SHALLOW_YELLOW = (132, 148, 113)
 PURPLE = (93, 63, 211)
 GREY = (128, 128, 128)
 LIGHT_BLUE = (155, 255, 255)
@@ -288,7 +290,7 @@ def formatTimeDelta(timeD):
     # e.g. "04:92"
 
 
-def drawHUD(screen, player, LVL):
+def drawHUD(screen, player, LVL, buttons=[]):
     collectedFont = getFont(12)
     collectedSurface = collectedFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE)
 
@@ -307,13 +309,23 @@ def drawHUD(screen, player, LVL):
         screen.blit(HSTimeSurface, (0, 44))
         screen.blit(HSCollectedSurface, ((HSTimeSurface.get_width()), 44))
 
+    
+    for button in buttons:
+        button.update(screen)
+    backButtonLabelFont = getFont(8)
+    backButtonLabelSurface = backButtonLabelFont.render("<esc>", True, YELLOW)
+    screen.blit(backButtonLabelSurface, (WIDTH-48, 4))
+    
+
     screen.blit(collectedSurface, (0, 4))
     screen.blit(currentTimeSurface, (0, 24))
+    
+            
     # dprint(player.timer)
 
 
 def init(LVL="1"):
-    global grid, p1, controls
+    global grid, p1, controls, backButton
     setTitle(f"Level: {LVL}")
     # grid = []
     
@@ -352,6 +364,8 @@ def init(LVL="1"):
         pygame.K_d: p1.right
     }
 
+    backButton = Button((WIDTH-48, 16), (32, 32), "<", getFont(42, ""), BLACK, YELLOW)
+
 def checkQuit():
     if pygame.event.get(eventtype=pygame.QUIT):
         pygame.quit()
@@ -360,15 +374,28 @@ def checkQuit():
 # entire menu assumes that all levels are named a unique int (e.g. "1.json", "2.json")
 # future support for custom levels will entail a seperate menu entirely, and a different directory for storing them
 def levelSelect(): 
+    syncSave(write=False)
     setTitle("Level Select", True)
-    levelList = LVLs.keys()
+    levelList = sorted(LVLs.keys())
     levelButtons = []
     levelKeybinds = {}
-    for level in levelList:
-        # pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(int(level)*(30+50), (120), 60, 40))
-        levelButtons.append((Button((int(level)*100-60, 300), (60, 60), level, getFont(84, ""), BLACK, YELLOW), level))
-        levelKeybinds[numKeys[int(level)-1]] = level
 
+    if UNLOCK_PROGRESSION:
+        unlockedLevels = ["1"]
+        for level in list(levelList)[1:]:
+            if str(int(level)-1) in SAVE:
+                unlockedLevels.append(level)
+    else:
+        unlockedLevels = levelList
+
+    for level in levelList:
+        if level in unlockedLevels:
+            col = YELLOW
+        else:
+            col = SHALLOW_YELLOW
+        levelButtons.append((Button((int(level)*100-60, 300), (60, 60), level, getFont(84, ""), BLACK, col), level))
+        levelKeybinds[numKeys[int(level)-1]] = level
+    LVL = None
     while True:
         CLOCK.tick(FPS)
         # LEVEL_SELECT_MOUSE_POS = pygame.mouse.get_pos()
@@ -380,13 +407,20 @@ def levelSelect():
                     for levelButton, level in levelButtons:
                         if levelButton.checkForInput(pygame.mouse.get_pos()): 
                             # init(level)
-                            play(level)
-                            return
+                            # play(level)
+                            LVL = level
+                            # return
                         # exit()
                 case pygame.KEYDOWN:
                     if event.key in levelKeybinds.keys():
-                        play(levelKeybinds[event.key])
-                        return
+                        LVL = levelKeybinds[event.key]
+                        # play(levelKeybinds[event.key])
+                        # return
+        if LVL in unlockedLevels:
+            play(LVL=LVL)
+            return
+        else:
+            pass
 
         SCREEN.fill(BLACK)
 
@@ -396,43 +430,51 @@ def levelSelect():
 
 def play(LVL="1"):
     init(LVL)
+
     run = True
     lastFrame=""
+
     while run and p1.alive and not p1.won:
         CLOCK.tick(FPS)
-
         checkQuit()
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                match event.key:
-                    case pygame.K_ESCAPE:
+            match event.type:
+                case pygame.KEYDOWN:
+                    match event.key:
+                        case pygame.K_ESCAPE:
+                            levelSelect()
+                            exit()
+                        case pygame.K_r:
+                            play(LVL=LVL)
+                            exit()
+                        case event.key if event.key in controls.keys():
+                            controls.get(event.key)()
+                case pygame.MOUSEBUTTONDOWN:
+                    if backButton.checkForInput(pygame.mouse.get_pos()):
                         levelSelect()
                         exit()
-                    case pygame.K_SPACE:
-                        play(LVL=LVL)
-                        exit()
-                if event.key in controls.keys():
-                    controls.get(event.key)()
         p1.tick()
         SCREEN.fill(BLACK)
-        
         if CLI: lastFrame = draw(grid, p1, lastFrame)
         else:
             draw(grid, p1)
-        drawHUD(SCREEN, p1, LVL)
+        drawHUD(SCREEN, p1, LVL, buttons=[backButton])
         pygame.display.flip()
+    
+
     if p1.won:
-        win(LVL)
-        levelSelect()
+        match win(LVL):
+            case 1:
+                play(LVL=LVL)
+            case 0:
+                levelSelect()
         exit()
-    if not p1.alive:
+    elif not p1.alive:
         match deathOverlay(SCREEN, p1):
             case 1:
                 play(LVL=LVL)
-                exit()
             case 0:
                 levelSelect()
-                exit()
         # levelSelect()
 
         exit()
@@ -443,7 +485,7 @@ def deathOverlay(screen, player):
 
     syncSave()
     retryText = getFont(16)
-    retryTextSurface = retryText.render("<SPACE> to retry.", False, YELLOW)
+    retryTextSurface = retryText.render("<R> to retry.", False, YELLOW)
     SCREEN.blit(retryTextSurface, (WIDTH/2 - (retryTextSurface.get_width()/2), 10))
 
     # quitText = getFont(20)
@@ -452,12 +494,16 @@ def deathOverlay(screen, player):
     while True:
         CLOCK.tick(FPS)
         checkQuit()
-        for event in pygame.event.get(eventtype=pygame.KEYDOWN):
-            match event.key:
-                case pygame.K_SPACE:
-                    return 1
-                case pygame.K_ESCAPE:
+        for event in pygame.event.get(eventtype=[pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN]):
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if backButton.checkForInput(pygame.mouse.get_pos()):
                     return 0
+            else:
+                match event.key:
+                    case pygame.K_r:
+                        return 1
+                    case pygame.K_ESCAPE:
+                        return 0
                 
 
 class CompletionRecord():
@@ -499,6 +545,27 @@ def win(LVL):
         SAVE[LVL] = completionRecord.toDict()
         syncSave()
     syncSave(write=False)
+
+    levelCompleteFont = getFont(16)
+    levelCompleteSurface = levelCompleteFont.render("<SPACE> to continue!", False, YELLOW)
+
+    SCREEN.blit(levelCompleteSurface, (WIDTH/2 - (levelCompleteSurface.get_width()/2), 10))
+    pygame.display.flip()
+    while True:
+        CLOCK.tick(FPS)
+        checkQuit()
+        for event in pygame.event.get(eventtype=[pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN]):
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if backButton.checkForInput(pygame.mouse.get_pos()):
+                    return 0
+            else:
+                match event.key:
+                    case pygame.K_SPACE | pygame.K_ESCAPE:
+                        return 0
+                    case pygame.K_r:
+                        return 1
+            
+                
 
 
 
