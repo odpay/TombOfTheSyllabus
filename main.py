@@ -328,7 +328,7 @@ def drawHUD(screen, player, LVL, buttons=[]):
 
 
 def init(LVL="1"):
-    global grid, p1, controls, backButton
+    global grid, p1, controls
     setTitle(f"Level: {LVL}")
     # grid = []
     
@@ -367,21 +367,71 @@ def init(LVL="1"):
         pygame.K_d: p1.right
     }
 
-    backButton = Button((WIDTH-48, 16), (32, 32), "<", getFont(42, ""), BLACK, YELLOW)
 
 def checkQuit():
     if pygame.event.get(eventtype=pygame.QUIT):
         pygame.quit()
         exit()
 
+
+def mainMenu():
+    setTitle("Main Menu")
+
+
+    titleFont = getFont(30)
+    titleSurface = titleFont.render("Tomb Of The Syllabus", False, YELLOW)
+    titleSubFont = getFont(20)
+    titleSubSurface = titleSubFont.render("By Josh", False, PURPLE)
+    
+    playButton = Button((WIDTH/2 - 90, HEIGHT/2 - 30), (180, 60), "PLAY", getFont(94, ""), BLACK, YELLOW)
+    quitButton = Button((WIDTH/2 - 90, HEIGHT/2 + 75), (180, 60), "QUIT", getFont(94, ""), BLACK, YELLOW)
+
+    SCREEN.fill(BLACK)
+    SCREEN.blit(titleSurface, (WIDTH/2 - (titleSurface.get_width()/2), 32))
+    SCREEN.blit(titleSubSurface, (WIDTH/2 - (titleSubSurface.get_width()/2), 32 + titleSurface.get_height() + 4))
+    # SCREEN.blit(newRecordSurface, ((WIDTH/2 - (newRecordSurface.get_width()/2)), 32))
+    playButton.update(SCREEN)
+    quitButton.update(SCREEN)
+    pygame.display.flip()
+    while True:
+
+        CLOCK.tick(FPS)
+        checkQuit()
+        pos = pygame.mouse.get_pos()
+        for event in pygame.event.get(eventtype=[pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN]):
+            match event.type:
+                case pygame.MOUSEBUTTONDOWN:
+                    if playButton.checkForInput(pos):
+                        levelSelect()
+                        exit()
+                    elif quitButton.checkForInput(pos):
+                        exit()
+                case pygame.KEYDOWN:
+                    match event.key:
+                        case pygame.K_ESCAPE | pygame.K_q:
+                            exit()
+                        case pygame.K_SPACE | pygame.K_RETURN | pygame.K_p:
+                            levelSelect()
+                            exit()
+                        
+
+
+
+
+
 # entire menu assumes that all levels are named a unique int (e.g. "1.json", "2.json")
 # future support for custom levels will entail a seperate menu entirely, and a different directory for storing them
 def levelSelect(): 
+    global backButton
     syncSave(write=False)
     setTitle("Level Select", True)
     levelList = sorted(LVLs.keys())
     levelButtons = []
     levelKeybinds = {}
+
+    levelSelectText = getFont(32)
+    levelSelectSurface = levelSelectText.render("Level Select", False, YELLOW)
+    backButton = Button((WIDTH-48, 16), (32, 32), "<", getFont(42, ""), BLACK, YELLOW)
 
     if UNLOCK_PROGRESSION:
         unlockedLevels = ["1"]
@@ -409,16 +459,18 @@ def levelSelect():
                 case pygame.MOUSEBUTTONDOWN:
                     for levelButton, level in levelButtons:
                         if levelButton.checkForInput(pygame.mouse.get_pos()): 
-                            # init(level)
-                            # play(level)
                             LVL = level
-                            # return
-                        # exit()
+                        elif backButton.checkForInput(pygame.mouse.get_pos()):
+                            mainMenu()
+                            exit()
                 case pygame.KEYDOWN:
                     if event.key in levelKeybinds.keys():
                         LVL = levelKeybinds[event.key]
                         # play(levelKeybinds[event.key])
                         # return
+                    elif event.key == pygame.K_ESCAPE:
+                        mainMenu()
+                        exit()
         if LVL in unlockedLevels:
             play(LVL=LVL)
             return
@@ -427,8 +479,13 @@ def levelSelect():
 
         SCREEN.fill(BLACK)
 
+        SCREEN.blit(levelSelectSurface, (WIDTH/2 - (levelSelectSurface.get_width()/2), 64))
+        # (retryTextSurface, (WIDTH/2 - (retryTextSurface.get_width()/2), 10))
+        backButton.update(SCREEN)
+
         for levelButton, _ in levelButtons:
             levelButton.update(SCREEN)
+
         pygame.display.flip()
 
 def play(LVL="1"):
@@ -581,4 +638,5 @@ if __name__ == "__main__":
     if debugMode:
         play("3")
     else:
-        levelSelect()
+        # levelSelect()
+        mainMenu()
