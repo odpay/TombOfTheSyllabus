@@ -286,7 +286,10 @@ def draw(grid, player, lastFrame=""):
 
 
 def formatTimeDelta(timeD):
-    return str(timeD.seconds).zfill(2) + ":" + str(int((timeD.total_seconds()-timeD.seconds)*1000)).zfill(2)[:2]
+    minutes = (timeD.seconds//60)%60
+    seconds = timeD.seconds - minutes*60
+    milliseconds = int((timeD.total_seconds()-timeD.seconds)*1000)
+    return str(minutes).zfill(2) + ":" + str(seconds).zfill(2) + ":" + str(milliseconds).zfill(2)[:2]
     # e.g. "04:92"
 
 
@@ -295,7 +298,7 @@ def drawHUD(screen, player, LVL, buttons=[]):
     collectedSurface = collectedFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE)
 
     currentTimeFont = getFont(12)
-    currentTimeSurface = currentTimeFont.render(f"Current time: {player.getAliveDuration()}", False, GREEN)
+    currentTimeSurface = currentTimeFont.render(f"Time: {player.getAliveDuration()}", False, GREEN)
 
     if LVL in SAVE:
         HSFont = getFont(12)
@@ -303,7 +306,7 @@ def drawHUD(screen, player, LVL, buttons=[]):
         HSTimeString = formatTimeDelta(HSTime)
         HSCollectedString = f"*  [{SAVE[LVL]['collected']}/3]"
 
-        HSTimeSurface = HSFont.render(f"Record Time: {HSTimeString}", False, YELLOW)
+        HSTimeSurface = HSFont.render(f"Record: {HSTimeString}", False, YELLOW)
         HSCollectedSurface = HSFont.render(HSCollectedString, False, PURPLE)
 
         screen.blit(HSTimeSurface, (0, 44))
@@ -547,9 +550,13 @@ def win(LVL):
     syncSave(write=False)
 
     levelCompleteFont = getFont(16)
-    levelCompleteSurface = levelCompleteFont.render("<SPACE> to continue!", False, YELLOW)
-
-    SCREEN.blit(levelCompleteSurface, (WIDTH/2 - (levelCompleteSurface.get_width()/2), 10))
+    levelCompleteSurface = levelCompleteFont.render("<SPACE> to continue!", False, YELLOW, BLACK)
+    SCREEN.blit(levelCompleteSurface, ((WIDTH/2 - (levelCompleteSurface.get_width()/2)), 8))
+    
+    if isHiScore:
+        newRecordFont = getFont(16)
+        newRecordSurface = newRecordFont.render("NEW RECORD!", False, GREEN, BLACK)
+        SCREEN.blit(newRecordSurface, ((WIDTH/2 - (newRecordSurface.get_width()/2)), 32))
     pygame.display.flip()
     while True:
         CLOCK.tick(FPS)
@@ -564,8 +571,6 @@ def win(LVL):
                         return 0
                     case pygame.K_r:
                         return 1
-            
-                
 
 
 
