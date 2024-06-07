@@ -53,7 +53,7 @@ pygame.font.init()
 def getFont(size=12, font="tomb-of-the-mask"):
     # return pygame.font.SysFont(None, size)
     if font == "": return pygame.font.SysFont(None, size)
-    return pygame.font.Font(f"./assets/font/{font}/{font}.TTF", size)
+    return pygame.font.Font(f"./assets/font/{font}/{font}.ttf", size)
 
 
 
