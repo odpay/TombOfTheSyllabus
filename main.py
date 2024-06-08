@@ -610,7 +610,7 @@ def play(LVL="1"):
 
 
     elif not p1.alive: # if player has died
-        match deathOverlay(SCREEN, p1): # function to present a restart prompt
+        match deathOverlay(): # function to present a restart prompt
             case 1: # retry level
                 play(LVL=LVL)
             case 0: # return to level select menu
