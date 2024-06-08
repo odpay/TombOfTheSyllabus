@@ -9,12 +9,12 @@ import platform
 
 ### CONFIG
 
-FPS = 60
-CLI = False
-FIXED_PROGRESSION = False
-LVL_DIR = "levelFiles"
-RUN_DIR = "run"
-movementQueueMax = 1
+FPS = 60 # Frames Per Second, to be rendered. modifying this does not offer an advantage to beating scores.
+CLI = False # CLI mode, not officially supported
+FIXED_PROGRESSION = True # if levels must be unlocked progressively
+LVL_DIR = "levelFiles" # directory for storing level files
+RUN_DIR = "run" # directory for storing config & save data
+movementQueueMax = 1 # limit for queueing movement actions
 debugMode = False
 
 ### CONSTANTS:
