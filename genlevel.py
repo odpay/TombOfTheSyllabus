@@ -1,11 +1,13 @@
 from PIL import Image
 import json
 
-LVL = "4"
-
-im = Image.open(f'levelsprites/{LVL}.png', 'r')
+LVL = input("LVL name? (./levelSprites/{?}.png): ") # level to convert
 
 
+im = Image.open(f'levelSprites/{LVL}.png', 'r') # image object
+
+
+# Colours
 RED = (255,0,0)
 WHITE = (255,255,255)
 BLUE = (0,0,255)
@@ -15,10 +17,12 @@ BLACK = (0,0,0)
 PURPLE = (93, 63, 211)
 GREY = (128, 128, 128)
 LIGHT_BLUE = (155, 255, 255)
+
+
 levelData = {}
 level = []
 
-for rownum in range(64):
+for rownum in range(64): # iterates through pixels in file, appends their cooresponding tile id
     row = []
     for pixelnum in range(64):
         col = im.getpixel((pixelnum, rownum))
@@ -45,5 +49,6 @@ for rownum in range(64):
     level.append(row)
 
 levelData["levelMap"] = level
-with open(f"levelFiles/{LVL}.json", "w") as f:
+with open(f"levelFiles/{LVL}.json", "w") as f: # store as JSON
     f.write(json.dumps(levelData))
+    f.close()
