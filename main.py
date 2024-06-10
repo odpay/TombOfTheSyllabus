@@ -1,5 +1,5 @@
 import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1' # prevents pygame support message
 import pygame
 import json
 from datetime import datetime, timedelta
@@ -7,28 +7,32 @@ import copy
 import os.path
 import platform
 
-# WIDTH = 1000
-# HEIGHT = 600
-WIDTH = 640
-HEIGHT = 700
-HEADER_PADDING = 60
-PADDING = 1
-TILE_WIDTH = 9
-FPS = 60
-GRID_X = 64
-GRID_Y = 64
-CLI = False
-UNLOCK_PROGRESSION = True
-titlePrefix = "TOTS: "
-LVL_dir = "levelFiles"
-RUN_DIR = "run"
-movementQueueMax = 1
+### CONFIG
+
+FPS = 60 # Frames Per Second, to be rendered. modifying this does not offer an advantage to beating scores.
+CLI = False # CLI mode, not officially supported
+FIXED_PROGRESSION = True # if levels must be unlocked progressively
+LVL_DIR = "levelFiles" # directory for storing level files
+RUN_DIR = "run" # directory for storing config & save data
+movementQueueMax = 1 # limit for queueing movement actions
 debugMode = False
-selfPlatform = platform.system()
 
-## Constants
+### CONSTANTS:
 
-numKeys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9]
+# Window dimensions
+WIDTH, HEIGHT = 640, 700
+HEADER_PADDING = 60 # gap above level view for displaying unobstructed HUD components
+
+# Gameplay rendering parameters
+PADDING = 1 # pixel gap between tiles
+TILE_SIZE = 9 # length of (square) tiles
+GRID_X, GRID_Y = 64, 64 # tile dimensions of level plane 
+
+titlePrefix = "TOTS: " # Constant prefix for window title 
+SELF_PLATFORM = platform.system() # identified operating system of host, for cross compatability
+
+
+numKeys = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9] # used for level select keybinds
 
 # Colours
 WHITE = (255, 255, 255)
@@ -44,74 +48,16 @@ LIGHT_BLUE = (155, 255, 255)
 
 
 
+
+
+# Pygame initialisation boilerplate
+pygame.init() # ensures better cross-compatability
+pygame.font.init()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT), vsync=1)
 CLOCK = pygame.time.Clock()
 
-pygame.init()
-pygame.font.init()
 
-def getFont(size=12, font="tomb-of-the-mask"):
-    # return pygame.font.SysFont(None, size)
-    if font == "": return pygame.font.SysFont(None, size)
-    return pygame.font.Font(f"./assets/font/{font}/{font}.ttf", size)
-
-
-
-def loadLevels(dir):
-    levels = {}
-    for file in os.scandir(dir):
-        if file.is_file:
-            name = file.name.split(".")[0]
-            levels[name] = {}
-            with open(f"{dir}/{file.name}", 'r') as f:
-                levelData = json.loads(f.read())
-                levels[name]["playerSpawn"] = tuple(levelData["playerSpawn"])
-                levels[name]["levelMap"] = levelData["levelMap"]
-    return levels
-
-
-LVLs = loadLevels(LVL_dir)
-
-def syncSave(saveFileName="save.json", write=True, reset=False):
-    global SAVE
-    fullDir = f"./{RUN_DIR}/{saveFileName}"
-
-    if not os.path.isfile(fullDir):
-        if not os.path.isdir(f"./{RUN_DIR}"):
-            os.mkdir(RUN_DIR)
-
-        with open(fullDir, "x") as newF:
-            newF.write("{}")
-            newF.close()
-
-    with open(fullDir, "r+") as saveFile:
-        if reset:
-            saveFile.seek(0)
-            saveFile.truncate()
-            saveFile.write(json.dumps({}))
-        elif write:
-            saveFile.seek(0)
-            saveFile.truncate()
-            saveFile.write(json.dumps(SAVE, indent=4, sort_keys=True))
-        else:
-            saveFileData = json.loads(saveFile.read())
-            SAVE = saveFileData
-        saveFile.close()
-
-
-syncSave(write=False)
-
-def dprint(x):
-    if debugMode: print(x)
-
-def clear(): # clears all printed text in console, used for CLI mode
-    if selfPlatform == "Windows":
-        os.system("cls") # Windows
-    else:
-        os.system("clear") # Unix (Mac, Linux)
-
-def setTitle(text, prefix=True): # function to set the game window title, useful for clearly indicating the current menu or level
-    pygame.display.set_caption(f"{titlePrefix if prefix else ''}{text}")
+### CLASSES:
 
 
 # Object representing the player (character) belonging to each level completion attempt
@@ -255,6 +201,103 @@ class CompletionRecord():
             "completedAt" : self.completedAt
         })
 
+
+### FUNCTIONS:
+
+## MISC FUNCTIONS:
+
+def dprint(x): # conditional print, only for debug mode
+    if debugMode: print(x)
+
+def clear(): # clears all printed text in console, used for CLI mode
+    if SELF_PLATFORM == "Windows":
+        os.system("cls") # Windows
+    else:
+        os.system("clear") # Unix (Mac, Linux)
+
+def setTitle(text, prefix=True): # function to set the game window title, useful for clearly indicating the current menu or level
+    pygame.display.set_caption(f"{titlePrefix if prefix else ''}{text}")
+
+# easy function to check and adhere to external quit requests (i.e. closing the game window)
+def checkQuit():
+    if pygame.event.get(eventtype=pygame.QUIT):
+        pygame.quit()
+        exit()
+
+
+# formats timeDelta objects (durations) into a more readable format, (MM:SS:MS)
+def formatTimeDelta(timeD):
+
+    minutes = (timeD.seconds//60)%60
+    seconds = timeD.seconds - minutes*60
+    milliseconds = int((timeD.total_seconds()-timeD.seconds)*1000)
+
+    return str(minutes).zfill(2) + ":" + str(seconds).zfill(2) + ":" + str(milliseconds).zfill(2)[:2] # Zero padding to ensure fixed string length, unless the run goes over 100 minutes haha.
+    # e.g. "04:92"
+
+
+
+## I/O FUNCTIONS:
+
+
+# Load stored level designs from disk, (deserialised from json)
+def loadLevels(dir):
+    levels = {}
+    # iterates through a directory of level files
+    for file in os.scandir(dir):
+        if file.is_file:
+            name = file.name.split(".")[0] # treats filename as level name (e.g. "3.json" -> "3")
+            levels[name] = {}
+            with open(f"{dir}/{file.name}", 'r') as f:
+                levelData = json.loads(f.read())
+                levels[name]["playerSpawn"] = tuple(levelData["playerSpawn"]) # specified coordinates to spawn the player
+                levels[name]["levelMap"] = levelData["levelMap"] # nested array of tiles (the grid)
+    return levels
+
+
+
+
+# accesses and updates the saved progression data from storage
+def syncSave(saveFileName="save.json", write=True, reset=False):
+    # SAVE is used to access the records
+    global SAVE
+    fullDir = f"./{RUN_DIR}/{saveFileName}"
+
+    # creates directory and file if absent (first time run)
+    if not os.path.isfile(fullDir):
+        if not os.path.isdir(f"./{RUN_DIR}"):
+            os.mkdir(RUN_DIR)
+        with open(fullDir, "x") as newF:
+            newF.write("{}")
+            newF.close()
+
+    # Reads contents of file (deserialises from json)
+    with open(fullDir, "r+") as saveFile:
+        if reset: # flag to reset all progression
+            saveFile.seek(0)
+            saveFile.truncate()
+            saveFile.write(json.dumps({}))
+        elif write: # flag to write modified save data to disk
+            saveFile.seek(0)
+            saveFile.truncate()
+            saveFile.write(json.dumps(SAVE, indent=4, sort_keys=True))
+        else: # only reading to update the SAVE object
+            saveFileData = json.loads(saveFile.read())
+            SAVE = saveFileData
+        saveFile.close()
+
+
+
+## RENDER FUNCTIONS:
+
+
+# Returns a font object at a specified size and font, used for drawing all text, default font is stored in assets/font/... (along with license)
+def getFont(size=12, font="tomb-of-the-mask"):
+    if font == "": return pygame.font.SysFont(None, size) # System font
+    return pygame.font.Font(f"./assets/font/{font}/{font}.ttf", size)
+
+
+
 # draws the main game grid (player, tiles) with support for CLI (console) rendering.
 def draw(grid, player, lastFrame=""):
     
@@ -277,29 +320,29 @@ def draw(grid, player, lastFrame=""):
             if (tileN, rowN) == (player.x, player.y): # is player
                 if player.alive:
                     view += "@" 
-                    pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                    pygame.draw.rect(SCREEN, YELLOW, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
                 else:
                     view += " "
             elif tile == 0: # air
                 view += " "
             elif tile == 2: # wall
                 view += "#"
-                pygame.draw.rect(SCREEN, WHITE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, WHITE, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
             elif tile == 3: # 'fire'
                 view += "X"
-                pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, RED, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
             elif tile == 4: # collectable 'star'
                 view += "+"
-                pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, PURPLE, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
             elif tile == 5: # end point
                 view += "$"
-                pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, GREEN, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
             elif tile == 6: # grey 'solidifying' tile
                 view += "O"
-                pygame.draw.rect(SCREEN, GREY, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, GREY, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
             elif tile == 7: # disappearing 'cloud' tile
                 view += "~"
-                pygame.draw.rect(SCREEN, LIGHT_BLUE, pygame.Rect(tileN*(TILE_WIDTH+PADDING), rowN*(TILE_WIDTH+PADDING)+HEADER_PADDING, TILE_WIDTH, TILE_WIDTH))
+                pygame.draw.rect(SCREEN, LIGHT_BLUE, pygame.Rect(tileN*(TILE_SIZE+PADDING), rowN*(TILE_SIZE+PADDING)+HEADER_PADDING, TILE_SIZE, TILE_SIZE))
             view += " "
         view += "|"
         view += "\n"
@@ -309,16 +352,6 @@ def draw(grid, player, lastFrame=""):
         print(view)
     return view
 
-
-# formats timeDelta objects (durations) into a more readable format, (MM:SS:MS)
-def formatTimeDelta(timeD):
-
-    minutes = (timeD.seconds//60)%60
-    seconds = timeD.seconds - minutes*60
-    milliseconds = int((timeD.total_seconds()-timeD.seconds)*1000)
-
-    return str(minutes).zfill(2) + ":" + str(seconds).zfill(2) + ":" + str(milliseconds).zfill(2)[:2] # Zero padding to ensure fixed string length, unless the run goes over 100 minutes haha.
-    # e.g. "04:92"
 
 
 # Draws the HUD elements used in gameplay, that is;
@@ -360,47 +393,9 @@ def drawHUD(screen, player, LVL, buttons=[]):
     screen.blit(currentTimeSurface, (0, 24))
 
 
-# initialises objects unique to each 'run' (level attempt)
-def init(LVL="1"):
-    # the grid, player, and player controls are made global as they only exist as one instance of themselves at any given time
-    # and they are widely accessed
-    # these globals will (mostly) still be passed subroutines to avoid race conditions 
-    global grid, p1, controls
-
-    setTitle(f"Level: {LVL}") # set window title text
-    
-    # deepcopy needed to prevent per-play tile updates from persisting across entire runtime, 
-    # e.g. ensures that previously collected stars will re-appear each time the level is restarted.
-    grid = copy.deepcopy(LVLs[LVL]["levelMap"])
-
-    # gets the player starting coordinates
-    pX, pY = LVLs[LVL]["playerSpawn"]
-
-    p1 = Player((pX, pY)) # initialises the player at said starting coordinates
-
-    # control mapping of (key : action)
-    # must be re-declared in initialisation as the movement actions are dynamic to each new player instance (p1).
-    controls = {
-        # arrow keys
-        pygame.K_UP: p1.up,
-        pygame.K_DOWN: p1.down,
-        pygame.K_LEFT: p1.left,
-        pygame.K_RIGHT: p1.right,
-
-        # WASD keys
-        pygame.K_w: p1.up,
-        pygame.K_s: p1.down,
-        pygame.K_a: p1.left,
-        pygame.K_d: p1.right
-    }
 
 
-# easy function to check and adhere to external quit requests (i.e. closing the game window)
-def checkQuit():
-    if pygame.event.get(eventtype=pygame.QUIT):
-        pygame.quit()
-        exit()
-
+## CORE/MENU FUNCTIONS:
 
 # The Main menu, not neccesarily the 'mainline', but this is the first menu encountered each runtime.
 def mainMenu():
@@ -456,9 +451,6 @@ def mainMenu():
                             exit()
 
 
-
-
-
 # This entire menu assumes that all levels are named a unique int (e.g. "1.json", "2.json")
 # future support for custom levels will entail a seperate menu entirely, and a different directory for storing them
 def levelSelect(): 
@@ -481,7 +473,7 @@ def levelSelect():
     backButton = Button((WIDTH-48, 16), (32, 32), "<", getFont(42, ""), BLACK, YELLOW)
 
 
-    if UNLOCK_PROGRESSION: # True by default, determines if levels should be only playable if the previous level has been completed.
+    if FIXED_PROGRESSION: # True by default, determines if levels should be only playable if the previous level has been completed.
         unlockedLevels = ["1"] # level 1 is always playable
         for level in list(levelList)[1:]:
             if str(int(level)-1) in SAVE: # checks save data for prior level completions.
@@ -529,6 +521,43 @@ def levelSelect():
         for levelButton, _ in levelButtons:
             levelButton.update(SCREEN)
         pygame.display.flip()
+
+
+# initialises objects unique to each 'run' (level attempt)
+def init(LVL="1"):
+    # the grid, player, and player controls are made global as they only exist as one instance of themselves at any given time
+    # and they are widely accessed
+    # these globals will (mostly) still be passed subroutines to avoid race conditions 
+    global grid, p1, controls
+
+    setTitle(f"Level: {LVL}") # set window title text
+    
+    # deepcopy needed to prevent per-play tile updates from persisting across entire runtime, 
+    # e.g. ensures that previously collected stars will re-appear each time the level is restarted.
+    grid = copy.deepcopy(LVLs[LVL]["levelMap"])
+
+    # gets the player starting coordinates
+    pX, pY = LVLs[LVL]["playerSpawn"]
+
+    p1 = Player((pX, pY)) # initialises the player at said starting coordinates
+
+    # control mapping of (key : action)
+    # must be re-declared in initialisation as the movement actions are dynamic to each new player instance (p1).
+    controls = {
+        # arrow keys
+        pygame.K_UP: p1.up,
+        pygame.K_DOWN: p1.down,
+        pygame.K_LEFT: p1.left,
+        pygame.K_RIGHT: p1.right,
+
+        # WASD keys
+        pygame.K_w: p1.up,
+        pygame.K_s: p1.down,
+        pygame.K_a: p1.left,
+        pygame.K_d: p1.right
+    }
+
+
 
 # The gameplay 'menu', this is where the actual game is played
 def play(LVL="1"):
@@ -582,7 +611,7 @@ def play(LVL="1"):
 
 
     elif not p1.alive: # if player has died
-        match deathOverlay(SCREEN, p1): # function to present a restart prompt
+        match deathOverlay(): # function to present a restart prompt
             case 1: # retry level
                 play(LVL=LVL)
             case 0: # return to level select menu
@@ -592,7 +621,7 @@ def play(LVL="1"):
 
 # in the event of the player dying.
 # ^ 'player' as in the character, the user is hopefully still alive.
-def deathOverlay(screen, player):
+def deathOverlay():
     setTitle("GAME OVER")
 
     syncSave()
@@ -618,7 +647,6 @@ def deathOverlay(screen, player):
                         return 1
                     case pygame.K_ESCAPE: # escaoe key pressed (back button)
                         return 0
-                
 
 
 # in the event of a level's end point being reached
@@ -680,7 +708,8 @@ def win(LVL):
 
 
 
-
 # executes main menu when program is launched
 if __name__ == "__main__":
+    syncSave(write=False)
+    LVLs = loadLevels(LVL_DIR)
     mainMenu()
