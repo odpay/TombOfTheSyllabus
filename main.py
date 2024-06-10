@@ -174,7 +174,8 @@ class Player():
 
     # updates the player, this is called every frame
     def tick(self):
-        if self.alive and not self.won: self.aliveDuration += 1 # incriment the aliveDuration ticker
+        if self.aliveDuration == 0 and self.moving: self.aliveDuration += 1 # ensures the timer starts when the player moves
+        if self.alive and not self.won and (self.aliveDuration > 0) : self.aliveDuration += 1 # incriment the aliveDuration ticker
 
         if not self.moving: # executes queued movement actions as soon as its legal (has landed on surface)
             self.consolidateMovementQueue()
