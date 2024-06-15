@@ -11,7 +11,7 @@ import platform
 
 FPS = 60 # Frames Per Second, to be rendered. modifying this does not offer an advantage to beating scores.
 CLI = False # CLI mode, not officially supported
-FIXED_PROGRESSION = True # if levels must be unlocked progressively
+FIXED_PROGRESSION = False # if levels must be unlocked progressively
 LVL_DIR = "levelFiles" # directory for storing level files
 RUN_DIR = "run" # directory for storing config & save data
 movementQueueMax = 1 # limit for queueing movement actions
@@ -649,8 +649,49 @@ def deathOverlay():
                         return 0
 
 
+# Temporary module test
+testCase = 1
+def moduleTest(level, current, saved=None, isHiScore=False):
+    global testCase
+
+
+    print(f"-----------\nTest Case [#{testCase}]:\n")
+    
+    print(f"Level: {level}")
+    print(f"\n### pre: Saved record details (saved score before):")
+    if saved:
+        print("Exists?: True")
+        print(f"Time: {saved.timer} ticks ")
+        print(f"Star Count: {saved.collected}")
+    else:
+        print("Exists?: False")
+    print(f"\n### Current completion details (just now):")
+    print(f"Time: {current.timer} ticks")
+    print(f"Star Count: {current.collected}")
+    print(f"Is new record?: {isHiScore}")
+
+    newRecord = CompletionRecord(recordDict=SAVE[level]) # fetch from save data file
+    print(f"\n### post: Saved record details (saved score after):")
+    print("Exists?: True")
+    print(f"Time: {newRecord.timer} ticks")
+    print(f"Star Count: {newRecord.collected}\n--------------\n")
+
+
+
+
+    # print(f"Test Case: {testCase}:")
+    # print(f"Old Record Time: {result[}")
+    # print(f"New Record Time: {result['new_record_time']}")
+    # print(f"Is New Record a High Score: {result['is_new_record_high_score']}")
+    # print(f"Resultant New Record Time: {result['resultant_new_record_time']}\n")
+    
+    # Increment test case number
+    testCase += 1
+        
+
 # in the event of a level's end point being reached
 def win(LVL):
+    savedRecord = None
     syncSave(write=False) # Ensure cached save data is up to date.
     setTitle("Level complete!")
 
@@ -689,6 +730,11 @@ def win(LVL):
         newRecordSurface = newRecordFont.render("NEW RECORD!", False, GREEN, BLACK)
         SCREEN.blit(newRecordSurface, ((WIDTH/2 - (newRecordSurface.get_width()/2)), 32))
     pygame.display.flip()
+
+
+
+    # Module test output
+    moduleTest(LVL, completionRecord, savedRecord, isHiScore)
 
     # checks for inputs, user can either continue (go back to level select), or retry the level.
     while True:
