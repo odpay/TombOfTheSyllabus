@@ -597,6 +597,7 @@ def play(LVL="1"):
         
         # Renders the HUD elements (timers, back button, etc.)
         drawHUD(SCREEN, p1, LVL, buttons=[backButton])
+        setTitle(f"{p1.aliveDuration} ticks", prefix="")
 
         pygame.display.flip()
     
@@ -677,17 +678,8 @@ def moduleTest(level, current, saved=None, isHiScore=False):
     print(f"Star Count: {newRecord.collected}\n--------------\n")
 
 
-
-
-    # print(f"Test Case: {testCase}:")
-    # print(f"Old Record Time: {result[}")
-    # print(f"New Record Time: {result['new_record_time']}")
-    # print(f"Is New Record a High Score: {result['is_new_record_high_score']}")
-    # print(f"Resultant New Record Time: {result['resultant_new_record_time']}\n")
-    
     # Increment test case number
     testCase += 1
-        
 
 # in the event of a level's end point being reached
 def win(LVL):
