@@ -249,7 +249,7 @@ def loadLevels(dir):
     levels = {}
     # iterates through a directory of level files
     for file in os.scandir(fullDir):
-        if file.is_file:
+        if file.is_file and file.name.endswith(".json"):
             name = file.name.split(".")[0] # treats filename as level name (e.g. "3.json" -> "3")
             levels[name] = {}
             with open(fullDir.joinpath(file.name), 'r') as f:
