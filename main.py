@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import copy
 import os.path
 import platform
+from pathlib import Path
 
 ### CONFIG
 
@@ -18,6 +19,8 @@ movementQueueMax = 1 # limit for queueing movement actions
 debugMode = False
 
 ### CONSTANTS:
+
+PARENT_DIR = Path(__file__).resolve().parent # directory of the main.py file
 
 # Window dimensions
 WIDTH, HEIGHT = 640, 700
@@ -242,13 +245,14 @@ def formatTimeDelta(timeD):
 
 # Load stored level designs from disk, (deserialised from json)
 def loadLevels(dir):
+    fullDir = PARENT_DIR.joinpath(dir)
     levels = {}
     # iterates through a directory of level files
-    for file in os.scandir(dir):
+    for file in os.scandir(fullDir):
         if file.is_file:
             name = file.name.split(".")[0] # treats filename as level name (e.g. "3.json" -> "3")
             levels[name] = {}
-            with open(f"{dir}/{file.name}", 'r') as f:
+            with open(fullDir.joinpath(file.name), 'r') as f:
                 levelData = json.loads(f.read())
                 levels[name]["playerSpawn"] = tuple(levelData["playerSpawn"]) # specified coordinates to spawn the player
                 levels[name]["levelMap"] = levelData["levelMap"] # nested array of tiles (the grid)
@@ -261,12 +265,12 @@ def loadLevels(dir):
 def syncSave(saveFileName="save.json", write=True, reset=False):
     # SAVE is used to access the records
     global SAVE
-    fullDir = f"./{RUN_DIR}/{saveFileName}"
+    fullDir = PARENT_DIR.joinpath(RUN_DIR, saveFileName)
 
     # creates directory and file if absent (first time run)
     if not os.path.isfile(fullDir):
-        if not os.path.isdir(f"./{RUN_DIR}"):
-            os.mkdir(RUN_DIR)
+        if not os.path.isdir(fullDir.parent):
+            os.mkdir(fullDir.parent)
         with open(fullDir, "x") as newF:
             newF.write("{}")
             newF.close()
@@ -294,7 +298,7 @@ def syncSave(saveFileName="save.json", write=True, reset=False):
 # Returns a font object at a specified size and font, used for drawing all text, default font is stored in assets/font/... (along with license)
 def getFont(size=12, font="tomb-of-the-mask"):
     if font == "": return pygame.font.SysFont(None, size) # System font
-    return pygame.font.Font(f"./assets/font/{font}/{font}.ttf", size)
+    return pygame.font.Font(PARENT_DIR.joinpath(f"assets/font/{font}/{font}.ttf"), size)
 
 
 
