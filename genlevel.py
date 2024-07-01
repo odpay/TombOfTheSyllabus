@@ -1,10 +1,12 @@
 from PIL import Image
 import json
+from pathlib import Path
+PARENT_DIR = Path(__file__).resolve().parent # directory of the main.py file
 
 LVL = input("LVL name? (./levelSprites/{?}.png): ") # level to convert
 
 
-im = Image.open(f'levelSprites/{LVL}.png', 'r') # image object
+im = Image.open(PARENT_DIR.joinpath(f"levelSprites/{LVL}.png"), 'r') # image object
 
 
 # Colours
@@ -49,6 +51,6 @@ for rownum in range(64): # iterates through pixels in file, appends their coores
     level.append(row)
 
 levelData["levelMap"] = level
-with open(f"levelFiles/{LVL}.json", "w") as f: # store as JSON
+with open(PARENT_DIR.joinpath(f"levelFiles/{LVL}.json"), "w") as f: # store as JSON
     f.write(json.dumps(levelData))
     f.close()
