@@ -360,6 +360,8 @@ def draw(grid, player, lastFrame=""):
 
 # Draws the HUD elements used in gameplay, that is;
 # collection counter, run timer, best record view (if applicable), small <ESC> label above the back button
+# NOTE: alot of the code was moved to the init function to avoid re-rendering the same text each frame. this was very last minute.
+# Therefore only dynamic elements are rendered each frame.
 def drawHUD(screen, player, LVL, buttons=[]):
 
     collectedSurface = HUDFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE) # All levels are designed with 3 collectables each, the counter denominator can be made dynamic following custom level support.  
