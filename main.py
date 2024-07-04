@@ -362,24 +362,11 @@ def draw(grid, player, lastFrame=""):
 # collection counter, run timer, best record view (if applicable), small <ESC> label above the back button
 def drawHUD(screen, player, LVL, buttons=[]):
 
-    collectedFont = getFont(12)
-    collectedSurface = collectedFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE) # All levels are designed with 3 collectables each, the counter denominator can be made dynamic following custom level support.  
+    collectedSurface = HUDFont.render(f"Collected: {player.starsCollected}/3", False, PURPLE) # All levels are designed with 3 collectables each, the counter denominator can be made dynamic following custom level support.  
 
-    currentTimeFont = getFont(12)
-    currentTimeSurface = currentTimeFont.render(f"Time: {player.getAliveDuration()}", False, GREEN) # formatted timer of how long the player has been alive
+    currentTimeSurface = HUDFont.render(f"Time: {player.getAliveDuration()}", False, GREEN) # formatted timer of how long the player has been alive
 
     if LVL in SAVE: # if the level has been previously completed, display the record time
-        HSFont = getFont(12)
-        HSTime = timedelta(seconds=(SAVE[LVL]["timer"]/ FPS))
-        HSTimeString = formatTimeDelta(HSTime)
-
-        HSCollectedString = f"*  [{SAVE[LVL]['collected']}/3]" # appended indicator showing how many 'stars' were collected for the record completion
-
-        # the record time and it's respective collection counter must be different surfaces as they are different colours.
-        HSTimeSurface = HSFont.render(f"Record: {HSTimeString}", False, YELLOW)
-        HSCollectedSurface = HSFont.render(HSCollectedString, False, PURPLE)
-
-        
         screen.blit(HSTimeSurface, (0, 44)) # renders record time
         screen.blit(HSCollectedSurface, ((HSTimeSurface.get_width()), 44)) # renders respective record collection count after the time
 
@@ -388,8 +375,6 @@ def drawHUD(screen, player, LVL, buttons=[]):
         button.update(screen)
     
     # draws the tiny "<ESC>" label above the back button
-    backButtonLabelFont = getFont(8)
-    backButtonLabelSurface = backButtonLabelFont.render("<esc>", True, YELLOW)
     screen.blit(backButtonLabelSurface, (WIDTH-48, 4))
     
     # renders the current run timer and collection counters
@@ -532,7 +517,7 @@ def init(LVL="1"):
     # the grid, player, and player controls are made global as they only exist as one instance of themselves at any given time
     # and they are widely accessed
     # these globals will (mostly) still be passed subroutines to avoid race conditions 
-    global grid, p1, controls
+    global grid, p1, controls, HUDFont, backButtonLabelFont, backButtonLabelSurface, HSTimeSurface, HSCollectedSurface
 
     setTitle(f"Level: {LVL}") # set window title text
     
@@ -560,6 +545,23 @@ def init(LVL="1"):
         pygame.K_a: p1.left,
         pygame.K_d: p1.right
     }
+
+    ## pre-rendered text surfaces for HUD elements, to avoid re-rendering each frame
+    HUDFont = getFont(12)
+
+    # draws the tiny "<ESC>" label above the back button
+    backButtonLabelFont = getFont(8)
+    backButtonLabelSurface = backButtonLabelFont.render("<esc>", True, YELLOW)
+
+    if LVL in SAVE: # if the level has been previously completed, get the record time and collection count
+        HSTime = timedelta(seconds=(SAVE[LVL]["timer"]/ FPS)) # converts the record time from ticks to a timedelta object
+        HSTimeString = formatTimeDelta(HSTime) # human friendly representation of the record time
+
+        HSCollectedString = f"*  [{SAVE[LVL]['collected']}/3]" # appended indicator showing how many 'stars' were collected for the record completion
+
+        # the record time and it's respective collection counter must be different surfaces as they are different colours.
+        HSTimeSurface = HUDFont.render(f"Record: {HSTimeString}", False, YELLOW)
+        HSCollectedSurface = HUDFont.render(HSCollectedString, False, PURPLE)
 
 
 
