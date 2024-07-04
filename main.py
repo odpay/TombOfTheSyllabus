@@ -8,7 +8,7 @@ import os.path
 import platform
 from pathlib import Path
 
-### CONFIG
+### CONFIG:
 
 FPS = 60 # Frames Per Second, to be rendered. modifying this does not offer an advantage to beating scores.
 CLI = False # CLI mode, not officially supported
