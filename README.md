@@ -3,20 +3,24 @@ Cute arcade game for my [HSC SDD](https://educationstandards.nsw.edu.au/wps/port
 
 
 
-This is currently a WIP project with a lazy commit structure,
+
 
 ## Setup
 
-Python 3.10+ required, (written for Python 3.12.2)
+Python 3.10+ required, (written with Python 3.12.2)
 
-install dependencies as needed using `pip3`, 
+install dependencies as needed using `pip`, 
+- tested: pygame 2.5.2+
 ```zsh
 pip3 install pygame
 ```
+*(or 'pip' for Windows)*
 
-a `requirements.txt` will be generated in a future commit
+*a `requirements.txt` will be generated in a future commit, if needed.*
 
 ## Running
+`cd` into the script directory, ensure all other project files are present.
+
 For Linux/MacOS (UNIX):
 ```zsh
 python3 ./main.py
